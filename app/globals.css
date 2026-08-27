@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  /* Khadi cotton base -- warmer and more textile-toned than a generic cream */
+  --color-khadi-50: #FBF7EF;
+  --color-khadi-100: #F3EAD6;
+  --color-khadi-200: #EFE6D6;
+  --color-khadi-300: #E3D5B8;
+
+  /* Ink -- warm charcoal, not pure black */
+  --color-ink-900: #2A241D;
+  --color-ink-700: #46402F;
+  --color-ink-500: #6B6350;
+
+  /* Indigo -- the dye tradition accent, replaces the default terracotta */
+  --color-indigo-900: #1F2E42;
+  --color-indigo-700: #2E4560;
+  --color-indigo-500: #3E5C82;
+  --color-indigo-300: #A9C0D6;
+
+  /* Turmeric / marigold -- secondary warm accent for highlights & status */
+  --color-turmeric-600: #B87A1F;
+  --color-turmeric-500: #C6862B;
+  --color-turmeric-100: #F3E1BE;
+
+  /* Loom green -- used sparingly for success/verified states */
+  --color-loom-600: #4E5C3F;
+  --color-loom-100: #DEE3D2;
+
+  --background: var(--color-khadi-200);
+  --foreground: var(--color-ink-900);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-khadi-50: var(--color-khadi-50);
+  --color-khadi-100: var(--color-khadi-100);
+  --color-khadi-200: var(--color-khadi-200);
+  --color-khadi-300: var(--color-khadi-300);
+
+  --color-ink-900: var(--color-ink-900);
+  --color-ink-700: var(--color-ink-700);
+  --color-ink-500: var(--color-ink-500);
+
+  --color-indigo-900: var(--color-indigo-900);
+  --color-indigo-700: var(--color-indigo-700);
+  --color-indigo-500: var(--color-indigo-500);
+  --color-indigo-300: var(--color-indigo-300);
+
+  --color-turmeric-600: var(--color-turmeric-600);
+  --color-turmeric-500: var(--color-turmeric-500);
+  --color-turmeric-100: var(--color-turmeric-100);
+
+  --color-loom-600: var(--color-loom-600);
+  --color-loom-100: var(--color-loom-100);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-plex-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Consistent, highly visible focus ring -- required for accessibility (§17) */
+:focus-visible {
+  outline: 3px solid var(--color-indigo-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

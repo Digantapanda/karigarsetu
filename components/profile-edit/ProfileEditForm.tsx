@@ -7,14 +7,18 @@ import { Button } from "@/components/ui/Button";
 import { translatedCraftCategoryOptions } from "@/lib/domain/craft-categories";
 import { submitProfileEdit } from "@/app/dashboard/profile/actions";
 import type { ProfileEditInput } from "@/lib/domain/craftsman";
-import type { Dictionary } from "@/lib/i18n/config";
+import type { Dictionary, Locale } from "@/lib/i18n/config";
+import { SPEECH_LOCALE } from "@/lib/i18n/config";
+import { VoiceConfigProvider } from "@/lib/voice/VoiceConfigContext";
 
 export function ProfileEditForm({
   initialValues,
   dict,
+  locale,
 }: {
   initialValues: ProfileEditInput;
   dict: Dictionary;
+  locale: Locale;
 }) {
   const f = dict.fields;
   const p = dict.profileEditPage;
@@ -43,15 +47,19 @@ export function ProfileEditForm({
   }
 
   return (
+    <VoiceConfigProvider
+      lang={SPEECH_LOCALE[locale]}
+      labels={{ readAloud: dict.common.readAloud, tapToSpeak: dict.common.tapToSpeak, listening: dict.common.listening }}
+    >
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="flex flex-col gap-5">
-        <Field
+        <Field voice
           label={f.craftsmanName}
           required
           value={values.craftsmanName}
           onChange={(e) => set("craftsmanName", e.target.value)}
         />
-        <Field
+        <Field voice
           label={f.photoUrl}
           value={values.photoUrl ?? ""}
           onChange={(e) => set("photoUrl", e.target.value)}
@@ -72,22 +80,22 @@ export function ProfileEditForm({
           value={values.secondaryCraftCategoryId ?? ""}
           onChange={(e) => set("secondaryCraftCategoryId", e.target.value)}
         />
-        <Field
+        <Field voice
           label={f.craftTradition}
           value={values.craftTradition ?? ""}
           onChange={(e) => set("craftTradition", e.target.value)}
         />
-        <Field
+        <Field voice
           label={f.craftDescription}
           value={values.description ?? ""}
           onChange={(e) => set("description", e.target.value)}
         />
-        <Field
+        <Field voice
           label={f.geographicRegion}
           value={values.geographicRegion ?? ""}
           onChange={(e) => set("geographicRegion", e.target.value)}
         />
-        <Field
+        <Field voice
           label={f.yearsOfExperience}
           type="number"
           min={0}
@@ -100,20 +108,20 @@ export function ProfileEditForm({
 
       <div className="flex flex-col gap-5 border-t border-ink-500/15 pt-6">
         <h3 className="font-display text-lg font-semibold text-ink-900">{p.businessSection}</h3>
-        <Field label={f.shopName} value={values.shopName ?? ""} onChange={(e) => set("shopName", e.target.value)} />
-        <Field
+        <Field voice label={f.shopName} value={values.shopName ?? ""} onChange={(e) => set("shopName", e.target.value)} />
+        <Field voice
           label={f.businessAddress}
           value={values.businessAddress ?? ""}
           onChange={(e) => set("businessAddress", e.target.value)}
         />
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Field
+          <Field voice
             label={f.villageTown}
             required
             value={values.villageTown}
             onChange={(e) => set("villageTown", e.target.value)}
           />
-          <Field
+          <Field voice
             label={f.district}
             required
             value={values.district}
@@ -121,15 +129,15 @@ export function ProfileEditForm({
           />
         </div>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Field label={f.state} required value={values.state} onChange={(e) => set("state", e.target.value)} />
-          <Field
+          <Field voice label={f.state} required value={values.state} onChange={(e) => set("state", e.target.value)} />
+          <Field voice
             label={f.pinCode}
             inputMode="numeric"
             value={values.pinCode ?? ""}
             onChange={(e) => set("pinCode", e.target.value)}
           />
         </div>
-        <Field
+        <Field voice
           label={f.shopContactNumber}
           type="tel"
           inputMode="numeric"
@@ -141,7 +149,7 @@ export function ProfileEditForm({
 
       <div className="flex flex-col gap-4 border-t border-ink-500/15 pt-6">
         <h3 className="font-display text-lg font-semibold text-ink-900">{p.registrationGstSection}</h3>
-        <Field
+        <Field voice
           label={f.registrationNumber}
           value={values.registrationNumber ?? ""}
           onChange={(e) => set("registrationNumber", e.target.value)}
@@ -155,7 +163,7 @@ export function ProfileEditForm({
           />
           <span className="text-sm text-ink-900">{p.showRegistrationPublic}</span>
         </label>
-        <Field
+        <Field voice
           label={f.gstNumber}
           value={values.gstNumber ?? ""}
           onChange={(e) => set("gstNumber", e.target.value.toUpperCase())}
@@ -186,5 +194,6 @@ export function ProfileEditForm({
         {isPending ? p.saving : p.saveChanges}
       </Button>
     </form>
+    </VoiceConfigProvider>
   );
 }

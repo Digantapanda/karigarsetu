@@ -12,7 +12,11 @@
     "loading": "Loading…",
     "edit": "Edit",
     "delete": "Delete",
-    "language": "Language"
+    "language": "Language",
+    "readAloud": "Read this field aloud",
+    "tapToSpeak": "Tap to fill this field by speaking",
+    "listening": "Listening…",
+    "voiceNotUnderstood": "We couldn't understand that. Please try again."
   },
   "home": {
     "eyebrow": "KarigarSetu",

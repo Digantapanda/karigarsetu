@@ -8,16 +8,19 @@ import { Button } from "@/components/ui/Button";
 import { translatedCraftCategoryOptions } from "@/lib/domain/craft-categories";
 import { submitCreateProduct, submitUpdateProduct } from "@/app/dashboard/products/actions";
 import type { ProductFormValues } from "@/lib/validation/product";
-import type { Dictionary } from "@/lib/i18n/config";
+import type { Dictionary, Locale } from "@/lib/i18n/config";
+import { SPEECH_LOCALE } from "@/lib/i18n/config";
+import { VoiceConfigProvider } from "@/lib/voice/VoiceConfigContext";
 
 interface ProductFormProps {
   productId?: string;
   initialValues: ProductFormValues;
   imageUrlsText: string;
   dict: Dictionary;
+  locale: Locale;
 }
 
-export function ProductForm({ productId, initialValues, imageUrlsText, dict }: ProductFormProps) {
+export function ProductForm({ productId, initialValues, imageUrlsText, dict, locale }: ProductFormProps) {
   const f = dict.fields;
   const pg = dict.productPage;
   const router = useRouter();
@@ -65,8 +68,12 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
   }
 
   return (
+    <VoiceConfigProvider
+      lang={SPEECH_LOCALE[locale]}
+      labels={{ readAloud: dict.common.readAloud, tapToSpeak: dict.common.tapToSpeak, listening: dict.common.listening }}
+    >
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <Field label={f.productName} required value={values.name} onChange={(e) => set("name", e.target.value)} />
+      <Field voice label={f.productName} required value={values.name} onChange={(e) => set("name", e.target.value)} />
 
       <SelectField
         label={f.category}
@@ -76,15 +83,15 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
         onChange={(e) => set("categoryId", e.target.value)}
       />
 
-      <Field
+      <Field voice
         label={f.description}
         value={values.description ?? ""}
         onChange={(e) => set("description", e.target.value)}
       />
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label={f.materials} value={values.materials ?? ""} onChange={(e) => set("materials", e.target.value)} />
-        <Field label={f.technique} value={values.technique ?? ""} onChange={(e) => set("technique", e.target.value)} />
+        <Field voice label={f.materials} value={values.materials ?? ""} onChange={(e) => set("materials", e.target.value)} />
+        <Field voice label={f.technique} value={values.technique ?? ""} onChange={(e) => set("technique", e.target.value)} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -95,7 +102,7 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
           onChange={(e) => set("priceType", e.target.value as ProductFormValues["priceType"])}
         />
         {values.priceType === "fixed" && (
-          <Field
+          <Field voice
             label={f.price}
             type="number"
             min={0}
@@ -113,7 +120,7 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
           value={values.availability}
           onChange={(e) => set("availability", e.target.value as ProductFormValues["availability"])}
         />
-        <Field
+        <Field voice
           label={f.stockQuantity}
           type="number"
           min={0}
@@ -125,7 +132,7 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field
+        <Field voice
           label={f.minOrderQty}
           type="number"
           min={1}
@@ -133,7 +140,7 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
           value={values.minOrderQty ?? ""}
           onChange={(e) => set("minOrderQty", Number(e.target.value))}
         />
-        <Field
+        <Field voice
           label={f.productionTime}
           value={values.productionTime ?? ""}
           onChange={(e) => set("productionTime", e.target.value)}
@@ -142,8 +149,8 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label={f.dimensions} value={values.dimensions ?? ""} onChange={(e) => set("dimensions", e.target.value)} />
-        <Field label={f.weight} value={values.weight ?? ""} onChange={(e) => set("weight", e.target.value)} />
+        <Field voice label={f.dimensions} value={values.dimensions ?? ""} onChange={(e) => set("dimensions", e.target.value)} />
+        <Field voice label={f.weight} value={values.weight ?? ""} onChange={(e) => set("weight", e.target.value)} />
       </div>
 
       <label className="flex items-center gap-3 rounded-lg border border-ink-500/20 bg-khadi-50 px-4 py-3">
@@ -156,7 +163,7 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
         <span className="text-sm text-ink-900">{f.customizable}</span>
       </label>
 
-      <Field label={f.videoUrl} value={values.videoUrl ?? ""} onChange={(e) => set("videoUrl", e.target.value)} />
+      <Field voice label={f.videoUrl} value={values.videoUrl ?? ""} onChange={(e) => set("videoUrl", e.target.value)} />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="images" className="text-sm font-medium text-ink-900">
@@ -183,5 +190,6 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict }: P
         {isPending ? pg.saving : productId ? pg.saveChanges : pg.addProduct}
       </Button>
     </form>
+    </VoiceConfigProvider>
   );
 }

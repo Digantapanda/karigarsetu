@@ -18,7 +18,8 @@ export default async function EditProductPage({ params }: PageParams) {
   const product = await getMyProduct(id);
   if (!product) notFound();
 
-  const dict = getDictionary(await getLocale());
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
 
   const initialValues: ProductFormValues = {
     name: product.name,
@@ -52,6 +53,7 @@ export default async function EditProductPage({ params }: PageParams) {
           initialValues={initialValues}
           imageUrlsText={product.images.map((img) => img.imageUrl).join("\n")}
           dict={dict}
+          locale={locale}
         />
       </div>
     </main>

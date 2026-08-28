@@ -26,7 +26,9 @@ import type {
   RecognitionInput,
 } from "@/types/domain";
 import type { z } from "zod";
-import type { Dictionary } from "@/lib/i18n/config";
+import type { Dictionary, Locale } from "@/lib/i18n/config";
+import { SPEECH_LOCALE } from "@/lib/i18n/config";
+import { VoiceConfigProvider } from "@/lib/voice/VoiceConfigContext";
 
 const initialAccount: BasicAccountInput = { fullName: "", email: "", mobileNumber: "", password: "" };
 const initialCraftsmanInfo: CraftsmanInfoInput = {
@@ -75,7 +77,7 @@ function fieldErrors<T extends z.ZodTypeAny>(
   return errors;
 }
 
-export function RegistrationWizard({ dict }: { dict: Dictionary }) {
+export function RegistrationWizard({ dict, locale }: { dict: Dictionary; locale: Locale }) {
   const stepLabels = [
     dict.registrationPage.stepAccount,
     dict.registrationPage.stepCraftsmanInfo,
@@ -133,6 +135,12 @@ export function RegistrationWizard({ dict }: { dict: Dictionary }) {
     });
   }
 
+  const voiceLabels = {
+    readAloud: dict.common.readAloud,
+    tapToSpeak: dict.common.tapToSpeak,
+    listening: dict.common.listening,
+  };
+
   if (profileSlug) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-loom-600/30 bg-loom-100 p-8 text-center">
@@ -155,35 +163,37 @@ export function RegistrationWizard({ dict }: { dict: Dictionary }) {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <StepIndicator steps={stepLabels} currentStep={step} ariaLabel={dict.registrationPage.progressLabel} />
+    <VoiceConfigProvider lang={SPEECH_LOCALE[locale]} labels={voiceLabels}>
+      <div className="flex flex-col gap-8">
+        <StepIndicator steps={stepLabels} currentStep={step} ariaLabel={dict.registrationPage.progressLabel} />
 
-      <div>
-        {step === 0 && <BasicAccountStep values={account} errors={errors} onChange={(f, v) => setAccount((s) => ({ ...s, [f]: v }))} dict={dict} />}
-        {step === 1 && <CraftsmanInfoStep values={craftsmanInfo} errors={errors} onChange={(f, v) => setCraftsmanInfo((s) => ({ ...s, [f]: v }))} dict={dict} />}
-        {step === 2 && <BusinessInfoStep values={businessInfo} errors={errors} onChange={(f, v) => setBusinessInfo((s) => ({ ...s, [f]: v }))} dict={dict} />}
-        {step === 3 && <CraftInfoStep values={craftInfo} errors={errors} onChange={(f, v) => setCraftInfo((s) => ({ ...s, [f]: v }))} dict={dict} />}
-        {step === 4 && <RecognitionStep values={recognition} errors={errors} onChange={(f, v) => setRecognition((s) => ({ ...s, [f]: v }))} dict={dict} />}
-      </div>
+        <div>
+          {step === 0 && <BasicAccountStep values={account} errors={errors} onChange={(f, v) => setAccount((s) => ({ ...s, [f]: v }))} dict={dict} />}
+          {step === 1 && <CraftsmanInfoStep values={craftsmanInfo} errors={errors} onChange={(f, v) => setCraftsmanInfo((s) => ({ ...s, [f]: v }))} dict={dict} />}
+          {step === 2 && <BusinessInfoStep values={businessInfo} errors={errors} onChange={(f, v) => setBusinessInfo((s) => ({ ...s, [f]: v }))} dict={dict} />}
+          {step === 3 && <CraftInfoStep values={craftInfo} errors={errors} onChange={(f, v) => setCraftInfo((s) => ({ ...s, [f]: v }))} dict={dict} />}
+          {step === 4 && <RecognitionStep values={recognition} errors={errors} onChange={(f, v) => setRecognition((s) => ({ ...s, [f]: v }))} dict={dict} />}
+        </div>
 
-      {submitError && (
-        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {submitError}
-        </p>
-      )}
-
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={goBack} disabled={step === 0 || isPending}>
-          {dict.registrationPage.back}
-        </Button>
-        {step < stepLabels.length - 1 ? (
-          <Button onClick={goNext}>{dict.registrationPage.next}</Button>
-        ) : (
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? dict.registrationPage.creating : dict.registrationPage.createProfile}
-          </Button>
+        {submitError && (
+          <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {submitError}
+          </p>
         )}
+
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={goBack} disabled={step === 0 || isPending}>
+            {dict.registrationPage.back}
+          </Button>
+          {step < stepLabels.length - 1 ? (
+            <Button onClick={goNext}>{dict.registrationPage.next}</Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={isPending}>
+              {isPending ? dict.registrationPage.creating : dict.registrationPage.createProfile}
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+    </VoiceConfigProvider>
   );
 }

@@ -13,6 +13,15 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 
 export const LOCALE_COOKIE = "locale";
 
+// BCP-47 codes for the Web Speech API (SpeechRecognition lang, SpeechSynthesisUtterance.lang).
+// Separate from the UI locale codes above because speech APIs want the
+// fuller region-tagged form.
+export const SPEECH_LOCALE: Record<Locale, string> = {
+  en: "en-IN",
+  hi: "hi-IN",
+  bn: "bn-IN",
+};
+
 // en.json is the canonical shape every other locale file must match.
 export type Dictionary = typeof en;
 

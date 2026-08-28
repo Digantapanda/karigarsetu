@@ -12,7 +12,8 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 
 export default async function ProfileEditPage() {
   const { profile, userId } = await getMyCraftsmanProfile();
-  const dict = getDictionary(await getLocale());
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
 
   if (!userId) redirect("/login");
   if (!profile) redirect("/register");
@@ -55,7 +56,7 @@ export default async function ProfileEditPage() {
       <PublishToggle status={profile.profileStatus} dict={dict} />
 
       <div className="rounded-2xl border border-ink-500/15 bg-khadi-100/60 p-6 sm:p-8">
-        <ProfileEditForm initialValues={initialValues} dict={dict} />
+        <ProfileEditForm initialValues={initialValues} dict={dict} locale={locale} />
       </div>
 
       <Section title={dict.profileEditPage.awardsSection}>

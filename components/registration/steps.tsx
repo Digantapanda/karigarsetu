@@ -26,6 +26,7 @@ export function BasicAccountStep({ values, errors, onChange, dict }: StepProps<B
   return (
     <div className="flex flex-col gap-5">
       <Field
+        voice
         label={f.fullName}
         required
         value={values.fullName}
@@ -34,6 +35,7 @@ export function BasicAccountStep({ values, errors, onChange, dict }: StepProps<B
         autoComplete="name"
       />
       <Field
+        voice
         label={f.email}
         required
         type="email"
@@ -43,6 +45,7 @@ export function BasicAccountStep({ values, errors, onChange, dict }: StepProps<B
         autoComplete="email"
       />
       <Field
+        voice
         label={f.mobileNumber}
         required
         type="tel"
@@ -72,6 +75,7 @@ export function CraftsmanInfoStep({ values, errors, onChange, dict }: StepProps<
   return (
     <div className="flex flex-col gap-5">
       <Field
+        voice
         label={f.craftsmanName}
         required
         value={values.craftsmanName}
@@ -89,18 +93,21 @@ export function CraftsmanInfoStep({ values, errors, onChange, dict }: StepProps<
         error={errors.craftCategoryId}
       />
       <Field
+        voice
         label={f.registrationNumber}
         value={values.registrationNumber ?? ""}
         onChange={(e) => onChange("registrationNumber", e.target.value)}
         error={errors.registrationNumber}
       />
       <Field
+        voice
         label={f.registrationAuthority}
         value={values.registrationAuthority ?? ""}
         onChange={(e) => onChange("registrationAuthority", e.target.value)}
         error={errors.registrationAuthority}
       />
       <Field
+        voice
         label={f.yearsOfExperience}
         type="number"
         min={0}
@@ -119,12 +126,14 @@ export function BusinessInfoStep({ values, errors, onChange, dict }: StepProps<B
   return (
     <div className="flex flex-col gap-5">
       <Field
+        voice
         label={f.shopName}
         value={values.shopName ?? ""}
         onChange={(e) => onChange("shopName", e.target.value)}
         error={errors.shopName}
       />
       <Field
+        voice
         label={f.businessAddress}
         value={values.businessAddress ?? ""}
         onChange={(e) => onChange("businessAddress", e.target.value)}
@@ -132,6 +141,7 @@ export function BusinessInfoStep({ values, errors, onChange, dict }: StepProps<B
       />
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field
+        voice
           label={f.villageTown}
           required
           value={values.villageTown}
@@ -139,6 +149,7 @@ export function BusinessInfoStep({ values, errors, onChange, dict }: StepProps<B
           error={errors.villageTown}
         />
         <Field
+        voice
           label={f.district}
           required
           value={values.district}
@@ -148,6 +159,7 @@ export function BusinessInfoStep({ values, errors, onChange, dict }: StepProps<B
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field
+        voice
           label={f.state}
           required
           value={values.state}
@@ -155,6 +167,7 @@ export function BusinessInfoStep({ values, errors, onChange, dict }: StepProps<B
           error={errors.state}
         />
         <Field
+        voice
           label={f.pinCode}
           inputMode="numeric"
           value={values.pinCode ?? ""}
@@ -163,6 +176,7 @@ export function BusinessInfoStep({ values, errors, onChange, dict }: StepProps<B
         />
       </div>
       <Field
+        voice
         label={f.gstNumber}
         value={values.gstNumber ?? ""}
         onChange={(e) => onChange("gstNumber", e.target.value.toUpperCase())}
@@ -170,6 +184,7 @@ export function BusinessInfoStep({ values, errors, onChange, dict }: StepProps<B
         hint={f.gstNumberHintPrivate}
       />
       <Field
+        voice
         label={f.shopContactNumber}
         type="tel"
         inputMode="numeric"
@@ -203,6 +218,7 @@ export function CraftInfoStep({ values, errors, onChange, dict }: StepProps<Craf
         error={errors.secondaryCraftCategoryId}
       />
       <Field
+        voice
         label={f.craftTradition}
         value={values.craftTradition ?? ""}
         onChange={(e) => onChange("craftTradition", e.target.value)}
@@ -210,12 +226,14 @@ export function CraftInfoStep({ values, errors, onChange, dict }: StepProps<Craf
         hint={f.craftTraditionHint}
       />
       <Field
+        voice
         label={f.craftDescription}
         value={values.craftDescription ?? ""}
         onChange={(e) => onChange("craftDescription", e.target.value)}
         error={errors.craftDescription}
       />
       <Field
+        voice
         label={f.geographicRegion}
         value={values.geographicRegion ?? ""}
         onChange={(e) => onChange("geographicRegion", e.target.value)}
@@ -241,12 +259,14 @@ export function RecognitionStep({ values, errors, onChange, dict }: StepProps<Re
       {values.giTag && (
         <div className="flex flex-col gap-5 border-l-2 border-turmeric-500/50 pl-4">
           <Field
+        voice
             label={f.giTagName}
             value={values.giTagName ?? ""}
             onChange={(e) => onChange("giTagName", e.target.value)}
             error={errors.giTagName}
           />
           <Field
+        voice
             label={f.giReferenceNumber}
             value={values.giReferenceNumber ?? ""}
             onChange={(e) => onChange("giReferenceNumber", e.target.value)}
@@ -255,18 +275,21 @@ export function RecognitionStep({ values, errors, onChange, dict }: StepProps<Re
         </div>
       )}
       <Field
+        voice
         label={f.nationalAward}
         value={values.nationalAward ?? ""}
         onChange={(e) => onChange("nationalAward", e.target.value)}
         error={errors.nationalAward}
       />
       <Field
+        voice
         label={f.stateAward}
         value={values.stateAward ?? ""}
         onChange={(e) => onChange("stateAward", e.target.value)}
         error={errors.stateAward}
       />
       <Field
+        voice
         label={f.otherRecognition}
         value={values.otherRecognition ?? ""}
         onChange={(e) => onChange("otherRecognition", e.target.value)}

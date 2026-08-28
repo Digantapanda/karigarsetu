@@ -25,7 +25,8 @@ export default async function NewProductPage() {
   const { userId } = await getMyCraftsmanProfile();
   if (!userId) redirect("/login");
 
-  const dict = getDictionary(await getLocale());
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8 sm:py-12">
@@ -35,7 +36,7 @@ export default async function NewProductPage() {
       </header>
 
       <div className="rounded-2xl border border-ink-500/15 bg-khadi-100/60 p-6 sm:p-8">
-        <ProductForm initialValues={emptyValues} imageUrlsText="" dict={dict} />
+        <ProductForm initialValues={emptyValues} imageUrlsText="" dict={dict} locale={locale} />
       </div>
     </main>
   );

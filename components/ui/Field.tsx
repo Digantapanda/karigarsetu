@@ -3,7 +3,6 @@
 import { useRef, type InputHTMLAttributes, type ReactNode } from "react";
 import { SpeakerButton } from "@/components/ui/SpeakerButton";
 import { MicButton } from "@/components/ui/MicButton";
-import { useVoiceConfig } from "@/lib/voice/VoiceConfigContext";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -27,7 +26,6 @@ export function Field({
 }: FieldProps) {
   const fieldId = id ?? inputProps.name;
   const inputRef = useRef<HTMLInputElement>(null);
-  const voiceConfig = useVoiceConfig();
 
   // Never offer voice fill/read on password fields.
   const showVoice = voice && inputProps.type !== "password";
@@ -69,17 +67,8 @@ export function Field({
         />
         {showVoice && (
           <>
-            <SpeakerButton
-              text={hint ? `${label}. ${hint}` : label}
-              lang={voiceConfig.lang}
-              label={voiceConfig.labels.readAloud}
-            />
-            <MicButton
-              lang={voiceConfig.lang}
-              label={voiceConfig.labels.tapToSpeak}
-              listeningLabel={voiceConfig.labels.listening}
-              onResult={handleVoiceResult}
-            />
+            <SpeakerButton text={hint ? `${label}. ${hint}` : label} />
+            <MicButton onResult={handleVoiceResult} />
           </>
         )}
         {trailing}

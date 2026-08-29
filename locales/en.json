@@ -16,7 +16,13 @@
     "readAloud": "Read this field aloud",
     "tapToSpeak": "Tap to fill this field by speaking",
     "listening": "Listening…",
-    "voiceNotUnderstood": "We couldn't understand that. Please try again."
+    "voiceNotUnderstood": "We couldn't understand that. Please try again.",
+    "micPermissionDenied": "Microphone access was denied. Please allow microphone access and try again.",
+    "micLanguageNotSupported": "Voice input isn't available in this language on your device yet.",
+    "micNetworkError": "Voice input needs an internet connection. Please check your connection and try again.",
+    "micNoSpeech": "We didn't hear anything. Please try again.",
+    "optionsAre": "Options are:",
+    "noVoiceForLanguage": "Your device doesn't have a voice installed for this language, so this may not sound right."
   },
   "home": {
     "eyebrow": "KarigarSetu",

@@ -4,21 +4,18 @@ import { useState, useTransition } from "react";
 import { Field } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { Button } from "@/components/ui/Button";
+import { SpeakerButton } from "@/components/ui/SpeakerButton";
 import { translatedCraftCategoryOptions } from "@/lib/domain/craft-categories";
 import { submitProfileEdit } from "@/app/dashboard/profile/actions";
 import type { ProfileEditInput } from "@/lib/domain/craftsman";
-import type { Dictionary, Locale } from "@/lib/i18n/config";
-import { SPEECH_LOCALE } from "@/lib/i18n/config";
-import { VoiceConfigProvider } from "@/lib/voice/VoiceConfigContext";
+import type { Dictionary } from "@/lib/i18n/config";
 
 export function ProfileEditForm({
   initialValues,
   dict,
-  locale,
 }: {
   initialValues: ProfileEditInput;
   dict: Dictionary;
-  locale: Locale;
 }) {
   const f = dict.fields;
   const p = dict.profileEditPage;
@@ -47,10 +44,6 @@ export function ProfileEditForm({
   }
 
   return (
-    <VoiceConfigProvider
-      lang={SPEECH_LOCALE[locale]}
-      labels={{ readAloud: dict.common.readAloud, tapToSpeak: dict.common.tapToSpeak, listening: dict.common.listening }}
-    >
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="flex flex-col gap-5">
         <Field voice
@@ -66,6 +59,7 @@ export function ProfileEditForm({
           hint={f.photoUrlHint}
         />
         <SelectField
+          voice
           label={f.primaryCraft}
           required
           placeholder={f.primaryCraftPlaceholder}
@@ -74,6 +68,7 @@ export function ProfileEditForm({
           onChange={(e) => set("primaryCraftCategoryId", e.target.value)}
         />
         <SelectField
+          voice
           label={f.secondaryCraft}
           placeholder={f.secondaryCraftPlaceholder}
           options={translatedCraftCategoryOptions(dict)}
@@ -162,6 +157,11 @@ export function ProfileEditForm({
             className="h-5 w-5 accent-indigo-700"
           />
           <span className="text-sm text-ink-900">{p.showRegistrationPublic}</span>
+          <SpeakerButton
+            text={p.showRegistrationPublic}
+            size={16}
+            className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded text-indigo-700 hover:bg-indigo-300/20"
+          />
         </label>
         <Field voice
           label={f.gstNumber}
@@ -176,6 +176,11 @@ export function ProfileEditForm({
             className="h-5 w-5 accent-indigo-700"
           />
           <span className="text-sm text-ink-900">{p.showGstPublic}</span>
+          <SpeakerButton
+            text={p.showGstPublic}
+            size={16}
+            className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded text-indigo-700 hover:bg-indigo-300/20"
+          />
         </label>
       </div>
 
@@ -194,6 +199,5 @@ export function ProfileEditForm({
         {isPending ? p.saving : p.saveChanges}
       </Button>
     </form>
-    </VoiceConfigProvider>
   );
 }

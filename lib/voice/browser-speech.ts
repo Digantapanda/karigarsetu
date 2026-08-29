@@ -14,10 +14,14 @@ import { useSyncExternalStore } from "react";
  * matches whichever of English/Hindi/Bengali is currently selected --
  * this is deliberately NOT hardcoded to English.
  *
- * Support varies by browser (notably inconsistent on iOS Safari) --
- * callers should check isSpeechRecognitionSupported() /
- * isSpeechSynthesisSupported() and simply not render the control when
- * unsupported, rather than showing a broken button.
+ * Support varies by browser and by OS-installed voices (notably
+ * inconsistent on iOS Safari, and language coverage for Hindi/Bengali
+ * specifically depends on what's installed on the device) -- callers
+ * should check isSpeechRecognitionSupported() / isSpeechSynthesisSupported()
+ * and simply not render the control when the API itself is unsupported,
+ * rather than showing a broken button. A supported API with no matching
+ * language voice installed is a separate, device-level limitation this
+ * code can't fully paper over -- see speak()'s fallback behavior below.
  */
 
 export function isSpeechRecognitionSupported(): boolean {
@@ -51,14 +55,80 @@ export function createSpeechRecognizer(lang: string): SpeechRecognitionLike | nu
   return recognizer;
 }
 
-/** Reads text aloud in the given language. Cancels any speech already in progress first. */
-export function speak(text: string, lang: string) {
-  if (!isSpeechSynthesisSupported() || !text) return;
+// --- Voice list loading ---
+//
+// speechSynthesis.getVoices() very often returns an EMPTY array the first
+// time it's called on a page -- the voice list loads asynchronously and
+// only becomes available once the "voiceschanged" event fires. Calling
+// .speak() before that has happened is a well-documented cause of
+// "nothing happens" bugs in Chromium browsers, and it disproportionately
+// affects non-English/non-default languages (Hindi, Bengali) because the
+// browser prioritizes loading the system default voice first. This is the
+// most likely root cause of Bengali speech silently doing nothing.
+let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+
+function loadVoices(): Promise<SpeechSynthesisVoice[]> {
+  if (!isSpeechSynthesisSupported()) return Promise.resolve([]);
+  if (voicesPromise) return voicesPromise;
+
+  voicesPromise = new Promise((resolve) => {
+    const existing = window.speechSynthesis.getVoices();
+    if (existing.length > 0) {
+      resolve(existing);
+      return;
+    }
+    const handleVoicesChanged = () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", handleVoicesChanged);
+      resolve(window.speechSynthesis.getVoices());
+    };
+    window.speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
+    // Some browsers never fire voiceschanged if voices were already
+    // available synchronously by the time this runs -- fall back to a
+    // short timeout so we don't hang forever waiting for an event that
+    // isn't coming.
+    setTimeout(() => resolve(window.speechSynthesis.getVoices()), 1000);
+  });
+
+  return voicesPromise;
+}
+
+function pickVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | undefined {
+  const exact = voices.find((v) => v.lang.toLowerCase() === lang.toLowerCase());
+  if (exact) return exact;
+  const languageOnly = lang.split("-")[0].toLowerCase();
+  return voices.find((v) => v.lang.toLowerCase().startsWith(languageOnly));
+}
+
+/**
+ * Reads text aloud in the given language. Cancels any speech already in
+ * progress first. Waits for the voice list to finish loading and
+ * explicitly picks a matching voice when one exists, instead of relying
+ * on utterance.lang alone -- fixes the common "first call does nothing"
+ * bug and gives non-English languages a real shot at using a voice that
+ * actually speaks that language, rather than silently falling back to
+ * whatever the browser's default voice happens to be.
+ *
+ * Returns false if there's no voice at all for this language (device
+ * limitation, not a code bug) so callers can surface that honestly.
+ */
+export async function speak(text: string, lang: string): Promise<boolean> {
+  if (!isSpeechSynthesisSupported() || !text.trim()) return false;
+
+  const voices = await loadVoices();
+  const voice = pickVoice(voices, lang);
+
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
   utterance.rate = 0.95;
+  if (voice) utterance.voice = voice;
+
   window.speechSynthesis.speak(utterance);
+
+  // If no voice on this device covers the requested language at all,
+  // report that honestly rather than pretending it worked -- the browser
+  // may still say nothing audible, or read it in a default-language voice.
+  return Boolean(voice);
 }
 
 // --- Client-only support detection, safe for SSR ---

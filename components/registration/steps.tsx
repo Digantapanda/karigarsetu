@@ -2,6 +2,8 @@
 
 import { Field } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
+import { SpeakerButton } from "@/components/ui/SpeakerButton";
+import { SpeakableText } from "@/components/ui/SpeakableText";
 import { translatedCraftCategoryOptions } from "@/lib/domain/craft-categories";
 import type { Dictionary } from "@/lib/i18n/config";
 import type {
@@ -84,6 +86,7 @@ export function CraftsmanInfoStep({ values, errors, onChange, dict }: StepProps<
         hint={f.craftsmanNameHint}
       />
       <SelectField
+        voice
         label={f.craftCategory}
         required
         placeholder={f.craftCategoryPlaceholder}
@@ -201,6 +204,7 @@ export function CraftInfoStep({ values, errors, onChange, dict }: StepProps<Craf
   return (
     <div className="flex flex-col gap-5">
       <SelectField
+        voice
         label={f.primaryCraft}
         required
         placeholder={f.primaryCraftPlaceholder}
@@ -210,6 +214,7 @@ export function CraftInfoStep({ values, errors, onChange, dict }: StepProps<Craf
         error={errors.primaryCraftCategoryId}
       />
       <SelectField
+        voice
         label={f.secondaryCraft}
         placeholder={f.secondaryCraftPlaceholder}
         options={translatedCraftCategoryOptions(dict)}
@@ -255,6 +260,11 @@ export function RecognitionStep({ values, errors, onChange, dict }: StepProps<Re
           className="h-5 w-5 accent-indigo-700"
         />
         <span className="text-base font-medium text-ink-900">{f.giTagCheckbox}</span>
+        <SpeakerButton
+          text={f.giTagCheckbox}
+          size={16}
+          className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded text-indigo-700 hover:bg-indigo-300/20"
+        />
       </label>
       {values.giTag && (
         <div className="flex flex-col gap-5 border-l-2 border-turmeric-500/50 pl-4">
@@ -295,7 +305,7 @@ export function RecognitionStep({ values, errors, onChange, dict }: StepProps<Re
         onChange={(e) => onChange("otherRecognition", e.target.value)}
         error={errors.otherRecognition}
       />
-      <p className="text-sm text-ink-500">{f.recognitionNote}</p>
+      <SpeakableText text={f.recognitionNote} className="text-sm text-ink-500" />
     </div>
   );
 }

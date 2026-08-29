@@ -66,10 +66,10 @@ export function AwardsManager({ awards, dict }: { awards: Award[]; dict: Diction
       )}
 
       <form action={handleAdd} className="flex flex-col gap-3 rounded-lg border border-ink-500/15 p-4">
-        <Field label={f.awardName} name="name" required />
-        <SelectField label={p.level} name="level" options={LEVEL_OPTIONS} defaultValue="other" />
-        <Field label={p.year} name="year" type="number" inputMode="numeric" />
-        <Field label={p.issuingOrganization} name="issuingOrganization" />
+        <Field label={f.awardName} name="name" required voice />
+        <SelectField label={p.level} name="level" options={LEVEL_OPTIONS} defaultValue="other" voice />
+        <Field label={p.year} name="year" type="number" inputMode="numeric" voice />
+        <Field label={p.issuingOrganization} name="issuingOrganization" voice />
         <Button type="submit" variant="secondary" disabled={isPending} className="self-start">
           {p.addAward}
         </Button>

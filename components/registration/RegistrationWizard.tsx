@@ -26,9 +26,7 @@ import type {
   RecognitionInput,
 } from "@/types/domain";
 import type { z } from "zod";
-import type { Dictionary, Locale } from "@/lib/i18n/config";
-import { SPEECH_LOCALE } from "@/lib/i18n/config";
-import { VoiceConfigProvider } from "@/lib/voice/VoiceConfigContext";
+import type { Dictionary } from "@/lib/i18n/config";
 
 const initialAccount: BasicAccountInput = { fullName: "", email: "", mobileNumber: "", password: "" };
 const initialCraftsmanInfo: CraftsmanInfoInput = {
@@ -77,7 +75,7 @@ function fieldErrors<T extends z.ZodTypeAny>(
   return errors;
 }
 
-export function RegistrationWizard({ dict, locale }: { dict: Dictionary; locale: Locale }) {
+export function RegistrationWizard({ dict }: { dict: Dictionary }) {
   const stepLabels = [
     dict.registrationPage.stepAccount,
     dict.registrationPage.stepCraftsmanInfo,
@@ -135,12 +133,6 @@ export function RegistrationWizard({ dict, locale }: { dict: Dictionary; locale:
     });
   }
 
-  const voiceLabels = {
-    readAloud: dict.common.readAloud,
-    tapToSpeak: dict.common.tapToSpeak,
-    listening: dict.common.listening,
-  };
-
   if (profileSlug) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-loom-600/30 bg-loom-100 p-8 text-center">
@@ -163,8 +155,7 @@ export function RegistrationWizard({ dict, locale }: { dict: Dictionary; locale:
   }
 
   return (
-    <VoiceConfigProvider lang={SPEECH_LOCALE[locale]} labels={voiceLabels}>
-      <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8">
         <StepIndicator steps={stepLabels} currentStep={step} ariaLabel={dict.registrationPage.progressLabel} />
 
         <div>
@@ -193,7 +184,6 @@ export function RegistrationWizard({ dict, locale }: { dict: Dictionary; locale:
             </Button>
           )}
         </div>
-      </div>
-    </VoiceConfigProvider>
+    </div>
   );
 }

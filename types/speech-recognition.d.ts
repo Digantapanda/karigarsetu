@@ -11,6 +11,10 @@ interface SpeechRecognitionEventLike extends Event {
   results: ArrayLike<SpeechRecognitionResultLike>;
 }
 
+interface SpeechRecognitionErrorEventLike extends Event {
+  error: string;
+}
+
 interface SpeechRecognitionLike extends EventTarget {
   lang: string;
   interimResults: boolean;
@@ -20,7 +24,7 @@ interface SpeechRecognitionLike extends EventTarget {
   stop(): void;
   abort(): void;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: ((event: Event) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
   onend: (() => void) | null;
   onstart: (() => void) | null;
 }

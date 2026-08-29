@@ -50,8 +50,8 @@ export function GiTagManager({ giTags, dict }: { giTags: GITag[]; dict: Dictiona
       )}
 
       <form action={handleAdd} className="flex flex-col gap-3 rounded-lg border border-ink-500/15 p-4">
-        <Field label={f.giTagName} name="giTagName" required />
-        <Field label={p.referenceNumber} name="referenceNumber" />
+        <Field label={f.giTagName} name="giTagName" required voice />
+        <Field label={p.referenceNumber} name="referenceNumber" voice />
         <Button type="submit" variant="secondary" disabled={isPending} className="self-start">
           {p.addGiTag}
         </Button>

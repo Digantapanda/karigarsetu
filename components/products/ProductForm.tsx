@@ -5,22 +5,20 @@ import { useRouter } from "next/navigation";
 import { Field } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { Button } from "@/components/ui/Button";
+import { SpeakerButton } from "@/components/ui/SpeakerButton";
 import { translatedCraftCategoryOptions } from "@/lib/domain/craft-categories";
 import { submitCreateProduct, submitUpdateProduct } from "@/app/dashboard/products/actions";
 import type { ProductFormValues } from "@/lib/validation/product";
-import type { Dictionary, Locale } from "@/lib/i18n/config";
-import { SPEECH_LOCALE } from "@/lib/i18n/config";
-import { VoiceConfigProvider } from "@/lib/voice/VoiceConfigContext";
+import type { Dictionary } from "@/lib/i18n/config";
 
 interface ProductFormProps {
   productId?: string;
   initialValues: ProductFormValues;
   imageUrlsText: string;
   dict: Dictionary;
-  locale: Locale;
 }
 
-export function ProductForm({ productId, initialValues, imageUrlsText, dict, locale }: ProductFormProps) {
+export function ProductForm({ productId, initialValues, imageUrlsText, dict }: ProductFormProps) {
   const f = dict.fields;
   const pg = dict.productPage;
   const router = useRouter();
@@ -68,14 +66,11 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict, loc
   }
 
   return (
-    <VoiceConfigProvider
-      lang={SPEECH_LOCALE[locale]}
-      labels={{ readAloud: dict.common.readAloud, tapToSpeak: dict.common.tapToSpeak, listening: dict.common.listening }}
-    >
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <Field voice label={f.productName} required value={values.name} onChange={(e) => set("name", e.target.value)} />
 
       <SelectField
+        voice
         label={f.category}
         placeholder={f.categoryPlaceholder}
         options={translatedCraftCategoryOptions(dict)}
@@ -96,6 +91,7 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict, loc
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <SelectField
+          voice
           label={f.priceType}
           options={PRICE_TYPE_OPTIONS}
           value={values.priceType}
@@ -115,6 +111,7 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict, loc
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <SelectField
+          voice
           label={f.availability}
           options={AVAILABILITY_OPTIONS}
           value={values.availability}
@@ -161,6 +158,11 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict, loc
           className="h-5 w-5 accent-indigo-700"
         />
         <span className="text-sm text-ink-900">{f.customizable}</span>
+        <SpeakerButton
+          text={f.customizable}
+          size={16}
+          className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded text-indigo-700 hover:bg-indigo-300/20"
+        />
       </label>
 
       <Field voice label={f.videoUrl} value={values.videoUrl ?? ""} onChange={(e) => set("videoUrl", e.target.value)} />
@@ -190,6 +192,5 @@ export function ProductForm({ productId, initialValues, imageUrlsText, dict, loc
         {isPending ? pg.saving : productId ? pg.saveChanges : pg.addProduct}
       </Button>
     </form>
-    </VoiceConfigProvider>
   );
 }

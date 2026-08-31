@@ -27,8 +27,14 @@ export function Field({
   const fieldId = id ?? inputProps.name;
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Never offer voice fill/read on password fields.
-  const showVoice = voice && inputProps.type !== "password";
+  // The speaker only ever reads the label/hint, never the typed value, so
+  // it's safe on password fields too -- a person who can't read still
+  // needs to hear "Password. Enter your password." The microphone is
+  // different: speaking a password out loud, and sending that audio to
+  // the browser's speech-recognition backend, is a real privacy/security
+  // problem, so voice *fill* stays excluded there.
+  const showSpeaker = voice;
+  const showMic = voice && inputProps.type !== "password";
 
   function handleVoiceResult(transcript: string) {
     const input = inputRef.current;
@@ -65,12 +71,8 @@ export function Field({
           aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
           className="h-12 w-full rounded-lg border border-ink-500/25 bg-khadi-50 px-4 text-base text-ink-900 placeholder:text-ink-500/60 focus:border-indigo-500"
         />
-        {showVoice && (
-          <>
-            <SpeakerButton text={hint ? `${label}. ${hint}` : label} />
-            <MicButton onResult={handleVoiceResult} />
-          </>
-        )}
+        {showSpeaker && <SpeakerButton text={hint ? `${label}. ${hint}` : label} />}
+        {showMic && <MicButton onResult={handleVoiceResult} />}
         {trailing}
       </div>
       {error ? (

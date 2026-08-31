@@ -10,6 +10,8 @@ import { ContactActions } from "@/components/profile/ContactActions";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { translatedCraftCategoryName } from "@/lib/domain/craft-categories";
+import { VoiceConfigProvider } from "@/lib/voice/VoiceConfigContext";
+import { SPEECH_LOCALE } from "@/lib/i18n/config";
 
 interface PageParams {
   params: Promise<{ slug: string }>;
@@ -62,9 +64,11 @@ export default async function CraftsmanProfilePage({ params }: PageParams) {
 
   const profileUrl = `${siteUrl()}/craftsman/${profile.slug}`;
   const products = await listPublishedProducts(profile.id);
-  const dict = getDictionary(await getLocale());
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
 
   return (
+    <VoiceConfigProvider lang={SPEECH_LOCALE[locale]} dict={dict}>
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-10 sm:py-14">
       <ProfileHeader profile={profile} dict={dict} />
 
@@ -123,6 +127,7 @@ export default async function CraftsmanProfilePage({ params }: PageParams) {
         )}
       </Section>
     </main>
+    </VoiceConfigProvider>
   );
 }
 

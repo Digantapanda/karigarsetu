@@ -1,4 +1,6 @@
 import type { ProfileCompletion } from "@/lib/domain/profile-completion";
+import { SpeakerButton } from "@/components/ui/SpeakerButton";
+import { SpeakableText } from "@/components/ui/SpeakableText";
 
 export function ProfileCompletionCard({
   completion,
@@ -12,7 +14,14 @@ export function ProfileCompletionCard({
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-ink-500/15 bg-khadi-100/60 p-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-semibold text-ink-900">{title}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-display text-lg font-semibold text-ink-900">{title}</h2>
+          <SpeakerButton
+            text={title}
+            size={16}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-indigo-700 hover:bg-indigo-300/20"
+          />
+        </div>
         <span className="font-display text-2xl font-semibold text-indigo-700">{completion.percent}%</span>
       </div>
 
@@ -34,11 +43,18 @@ export function ProfileCompletionCard({
               {item.done ? "✓" : ""}
             </span>
             <span className={item.done ? "text-ink-700" : "text-ink-500"}>{item.label}</span>
+            {!item.done && (
+              <SpeakerButton
+                text={item.hint ? `${item.label}. ${item.hint}` : item.label}
+                size={14}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-indigo-700 hover:bg-indigo-300/20"
+              />
+            )}
           </li>
         ))}
       </ul>
 
-      {nextHint && <p className="text-sm text-ink-500">{nextHint}</p>}
+      {nextHint && <SpeakableText text={nextHint} className="text-sm text-ink-500" />}
     </div>
   );
 }

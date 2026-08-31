@@ -11,13 +11,14 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      <Field label={dict.loginPage.emailLabel} name="email" type="email" required autoComplete="email" />
+      <Field label={dict.loginPage.emailLabel} name="email" type="email" required autoComplete="email" voice />
       <Field
         label={dict.loginPage.passwordLabel}
         name="password"
         type="password"
         required
         autoComplete="current-password"
+        voice
       />
 
       {state?.error && (

@@ -2,8 +2,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
+import { InterfaceModeSelector } from "@/components/layout/InterfaceModeSelector";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getInterfaceMode } from "@/lib/interface-mode/get-interface-mode";
 
 export async function SiteHeader() {
   const supabase = await createClient();
@@ -13,6 +15,7 @@ export async function SiteHeader() {
 
   const locale = await getLocale();
   const dict = getDictionary(locale);
+  const interfaceMode = await getInterfaceMode();
 
   return (
     <header className="border-b border-ink-500/15 bg-khadi-100/60">
@@ -43,6 +46,7 @@ export async function SiteHeader() {
             </>
           )}
 
+          <InterfaceModeSelector current={interfaceMode} dict={dict} />
           <LanguageSelector current={locale} />
         </nav>
       </div>

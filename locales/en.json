@@ -22,7 +22,10 @@
     "micNetworkError": "Voice input needs an internet connection. Please check your connection and try again.",
     "micNoSpeech": "We didn't hear anything. Please try again.",
     "optionsAre": "Options are:",
-    "noVoiceForLanguage": "Your device doesn't have a voice installed for this language, so this may not sound right."
+    "noVoiceForLanguage": "Your device doesn't have a voice installed for this language, so this may not sound right.",
+    "textMode": "Text",
+    "iconMode": "Icons",
+    "interfaceModeLabel": "View"
   },
   "home": {
     "eyebrow": "KarigarSetu",

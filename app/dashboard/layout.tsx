@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { submitLogout } from "@/app/dashboard/actions";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
+import { InterfaceModeSelector } from "@/components/layout/InterfaceModeSelector";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getInterfaceMode } from "@/lib/interface-mode/get-interface-mode";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   const dict = getDictionary(locale);
+  const interfaceMode = await getInterfaceMode();
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -16,6 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             KarigarSetu
           </Link>
           <div className="flex items-center gap-3">
+            <InterfaceModeSelector current={interfaceMode} dict={dict} />
             <LanguageSelector current={locale} />
             <form action={submitLogout}>
               <button

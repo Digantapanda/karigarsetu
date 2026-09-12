@@ -1,5 +1,22 @@
 export interface PilotDictionary {
-  consent: { title: string; body: string; agree: string };
+  landing: {
+    title: string;
+    intro: string;
+    purposeLabel: string;
+    purposeText: string;
+    stepsLabel: string;
+    step1: string;
+    step2: string;
+    step3: string;
+    step4: string;
+    durationLabel: string;
+    durationText: string;
+    confidentialityLabel: string;
+    confidentialityText: string;
+    voluntaryLabel: string;
+    voluntaryText: string;
+    continueButton: string;
+  };
   intake: {
     title: string;
     fullName: string;
@@ -51,10 +68,23 @@ export interface PilotDictionary {
 }
 
 const en: PilotDictionary = {
-  consent: {
-    title: "Before we begin",
-    body: "This is a short research study to help us improve KarigarSetu for people with different reading, language, and digital experience levels. You'll try three versions of the app and answer a few short questions about each. There are no right or wrong answers -- we're testing the app, not you. Your answers are kept for research purposes and will not be shared outside this study. You can stop at any time.",
-    agree: "I agree to take part",
+  landing: {
+    title: "About this study",
+    intro: "We're inviting you to take part in a short research study for KarigarSetu, a platform for craftsmen like you.",
+    purposeLabel: "Why we're doing this",
+    purposeText: "We want to make this app easy to use for everyone, whatever your reading level, language, or experience with phones and apps. Your feedback helps us find what works and what doesn't.",
+    stepsLabel: "What you'll do",
+    step1: "Answer a few short questions about yourself",
+    step2: "Try three different versions of the app, one after another",
+    step3: "Answer a few short questions after each version",
+    step4: "Share your overall opinion at the end",
+    durationLabel: "How long it takes",
+    durationText: "About 15 to 20 minutes in total.",
+    confidentialityLabel: "Your information",
+    confidentialityText: "Your answers are used only for this research and are not shared outside the study. There are no right or wrong answers -- we are testing the app, not you.",
+    voluntaryLabel: "Your choice",
+    voluntaryText: "Taking part is entirely voluntary. You can stop at any time, for any reason.",
+    continueButton: "Continue",
   },
   intake: {
     title: "A little about you",
@@ -119,10 +149,23 @@ const en: PilotDictionary = {
 };
 
 const hi: PilotDictionary = {
-  consent: {
-    title: "शुरू करने से पहले",
-    body: "यह एक छोटा शोध अध्ययन है जो हमें अलग-अलग पढ़ने, भाषा और डिजिटल अनुभव स्तर वाले लोगों के लिए KarigarSetu को बेहतर बनाने में मदद करेगा। आप ऐप के तीन संस्करण आज़माएंगे और प्रत्येक के बारे में कुछ छोटे सवालों के जवाब देंगे। कोई सही या गलत जवाब नहीं है -- हम ऐप का परीक्षण कर रहे हैं, आपका नहीं। आपके जवाब केवल शोध के लिए रखे जाएंगे और इस अध्ययन के बाहर साझा नहीं किए जाएंगे। आप किसी भी समय रुक सकते हैं।",
-    agree: "मैं भाग लेने के लिए सहमत हूं",
+  landing: {
+    title: "इस अध्ययन के बारे में",
+    intro: "हम आपको KarigarSetu, कारीगरों के लिए एक मंच, के लिए एक छोटे शोध अध्ययन में भाग लेने के लिए आमंत्रित कर रहे हैं।",
+    purposeLabel: "हम यह क्यों कर रहे हैं",
+    purposeText: "हम चाहते हैं कि यह ऐप हर किसी के लिए उपयोग करना आसान हो, चाहे आपका पढ़ने का स्तर, भाषा, या फोन और ऐप्स का अनुभव कुछ भी हो। आपकी प्रतिक्रिया हमें यह जानने में मदद करती है कि क्या काम करता है और क्या नहीं।",
+    stepsLabel: "आप क्या करेंगे",
+    step1: "अपने बारे में कुछ छोटे सवालों के जवाब दें",
+    step2: "ऐप के तीन अलग-अलग संस्करण एक के बाद एक आज़माएं",
+    step3: "प्रत्येक संस्करण के बाद कुछ छोटे सवालों के जवाब दें",
+    step4: "अंत में अपनी समग्र राय साझा करें",
+    durationLabel: "इसमें कितना समय लगेगा",
+    durationText: "कुल मिलाकर लगभग 15 से 20 मिनट।",
+    confidentialityLabel: "आपकी जानकारी",
+    confidentialityText: "आपके जवाब केवल इस शोध के लिए उपयोग किए जाते हैं और अध्ययन के बाहर साझा नहीं किए जाते। कोई सही या गलत जवाब नहीं है -- हम ऐप का परीक्षण कर रहे हैं, आपका नहीं।",
+    voluntaryLabel: "आपकी पसंद",
+    voluntaryText: "भाग लेना पूरी तरह से स्वैच्छिक है। आप किसी भी समय, किसी भी कारण से रुक सकते हैं।",
+    continueButton: "जारी रखें",
   },
   intake: {
     title: "आपके बारे में थोड़ा",
@@ -187,10 +230,23 @@ const hi: PilotDictionary = {
 };
 
 const bn: PilotDictionary = {
-  consent: {
-    title: "শুরু করার আগে",
-    body: "এটি একটি ছোট গবেষণা যা বিভিন্ন পড়ার, ভাষার এবং ডিজিটাল অভিজ্ঞতার স্তরের মানুষদের জন্য KarigarSetu-কে আরও ভালো করতে সাহায্য করবে। আপনি অ্যাপের তিনটি সংস্করণ ব্যবহার করে দেখবেন এবং প্রতিটি সম্পর্কে কয়েকটি ছোট প্রশ্নের উত্তর দেবেন। কোনো সঠিক বা ভুল উত্তর নেই -- আমরা অ্যাপটি পরীক্ষা করছি, আপনাকে নয়। আপনার উত্তরগুলি শুধুমাত্র গবেষণার জন্য রাখা হবে এবং এই গবেষণার বাইরে শেয়ার করা হবে না। আপনি যেকোনো সময় থামতে পারেন।",
-    agree: "আমি অংশ নিতে সম্মত",
+  landing: {
+    title: "এই গবেষণা সম্পর্কে",
+    intro: "আমরা আপনাকে KarigarSetu, কারিগরদের জন্য একটি প্ল্যাটফর্ম, নিয়ে একটি ছোট গবেষণায় অংশ নেওয়ার জন্য আমন্ত্রণ জানাচ্ছি।",
+    purposeLabel: "আমরা কেন এটি করছি",
+    purposeText: "আমরা চাই এই অ্যাপটি সবার জন্য ব্যবহার করা সহজ হোক, আপনার পড়ার দক্ষতা, ভাষা, বা ফোন এবং অ্যাপ ব্যবহারের অভিজ্ঞতা যাই হোক না কেন। আপনার মতামত আমাদের বুঝতে সাহায্য করে কী কাজ করে এবং কী করে না।",
+    stepsLabel: "আপনি যা করবেন",
+    step1: "নিজের সম্পর্কে কয়েকটি ছোট প্রশ্নের উত্তর দিন",
+    step2: "অ্যাপের তিনটি ভিন্ন সংস্করণ একে একে ব্যবহার করে দেখুন",
+    step3: "প্রতিটি সংস্করণের পরে কয়েকটি ছোট প্রশ্নের উত্তর দিন",
+    step4: "শেষে আপনার সামগ্রিক মতামত জানান",
+    durationLabel: "এতে কত সময় লাগবে",
+    durationText: "মোট প্রায় ১৫ থেকে ২০ মিনিট।",
+    confidentialityLabel: "আপনার তথ্য",
+    confidentialityText: "আপনার উত্তরগুলি শুধুমাত্র এই গবেষণার জন্য ব্যবহৃত হয় এবং গবেষণার বাইরে শেয়ার করা হয় না। কোনো সঠিক বা ভুল উত্তর নেই -- আমরা অ্যাপটি পরীক্ষা করছি, আপনাকে নয়।",
+    voluntaryLabel: "আপনার সিদ্ধান্ত",
+    voluntaryText: "অংশগ্রহণ সম্পূর্ণভাবে ঐচ্ছিক। আপনি যেকোনো সময়, যেকোনো কারণে থামতে পারেন।",
+    continueButton: "চালিয়ে যান",
   },
   intake: {
     title: "আপনার সম্পর্কে কিছুটা",

@@ -1,5 +1,10 @@
 # KarigarSetu Pilot Study — Runbook
 
+> **Build status (read this first).** Built and working: the landing page (with Interview/Task Language and Preferred Language), the full pre-task intake (Participant Info + Sections A–G: demographics, literacy, digital access, digital familiarity, self-efficacy, WHO-5, SWLS, baseline happiness), the post-task battery after each condition (SUS, raw NASA-TLX, task comprehension/independence, satisfaction K1–K3, post-task happiness with change from baseline), the final interface-preference questions (M1–M4), the thank-you page, and the admin page with a records table plus CSV downloads.
+>
+> **Not built yet:** the step where participants actually perform Tasks 1–4 on the *real* app pages (dashboard → add product → view profile and share by mail → view orders). That needs auto-provisioned demo craftsman accounts, a pilot mode that hides Share Profile / Generate QR / profile completion on the dashboard, detailed pointer/touch tracking, and a mock Orders screen. Until that lands, each condition goes from its intro screen straight to the post-task questionnaire, so **do not run real participants yet** — the per-task performance columns in the export will be empty and the three interface conditions are not actually being experienced.
+
+
 This is the step-by-step guide for taking the pilot module from code to a completed, exportable dataset of 60–72 participants. Follow it in order the first time; sections are labeled so you can jump back to any one later.
 
 ---
@@ -8,7 +13,7 @@ This is the step-by-step guide for taking the pilot module from code to a comple
 
 1. **Create/confirm your Supabase project.** If you're reusing the main KarigarSetu project, that's fine — the pilot tables are namespaced (`pilot_*`) and won't collide with anything.
 
-2. **Run the new migration.** In the Supabase SQL Editor, run `supabase/migrations/0005_pilot_study.sql`. This creates `pilot_participants`, `pilot_sessions`, `pilot_task_events`, and `pilot_final_feedback`, all with RLS enabled and zero anon/authenticated policies.
+2. **Run the two pilot migrations, in order.** In the Supabase SQL Editor run `supabase/migrations/0005_pilot_study.sql`, then `supabase/migrations/0006_pilot_instrument_v2.sql`. Together they create `pilot_participants`, `pilot_sessions`, `pilot_task_events`, `pilot_final_feedback`, `pilot_pointer_events`, and `pilot_mock_orders`, all with RLS enabled and zero anon/authenticated policies. 0006 must run after 0005 — it alters 0005's tables.
 
 3. **Get your service-role key.** Supabase dashboard → Project Settings → API → `service_role` secret (not the `anon` key — the pilot module specifically needs the service-role one). Copy it.
 
@@ -76,26 +81,27 @@ If you need more detail than the dashboard gives (e.g., filtering by literacy le
 
 ## F. Getting from CSV to the statistical analysis
 
-The export is already shaped as **one row per participant × condition × task**, which is what a mixed-effects model wants directly — no pivoting needed. Columns map onto your original design as:
+`/pilot/admin` offers two downloads:
+
+- **Analysis CSV** — de-identified (no names or contact details), **one row per participant × condition** (3 rows per participant). Participant-level variables (Sections A–G) repeat on each of that participant's rows; per-condition outcomes vary by row. Ready for a mixed-effects model with participant as a random effect.
+- **Contacts CSV** — participant code, name, contact, registration and completion time, for compensation and follow-up. Keep this file separate from the analysis data.
+
+Key analysis columns:
 
 | Design element | CSV column(s) |
 |---|---|
-| UI condition (within-subject factor) | `condition` (T / TA / TAI) |
+| UI condition (within-subject factor) | `condition` (T / TA / TAI), `order_position` |
 | Participant (random effect) | `participant_code` |
-| Gender, Age, Language | `gender`, `age_group`, `language` |
-| Literacy, Digital experience | `literacy_level`, `digital_experience` |
-| Task success (primary outcome) | `success` |
-| Task completion time | `time_ms` |
-| Error rate | `error_count` |
-| Assistance requests | `assistance_requests` |
-| Comprehension | `comprehension_correct` |
-| Usability (SUS) | `sus_score` (already computed 0–100; `sus_responses` jsonb has the raw 10 items if you want item-level analysis) |
-| Satisfaction | `satisfaction_score` |
+| Demographics | `age_bracket`, `gender`, `education`, `occupation`, `residence`, `session_language`, `device` |
+| Literacy / digital access | `literacy_reading`, `literacy_writing`, `digital_text_comprehension`, `internet_access`, `phone_access`, `phone_exclusivity`, `internet_frequency` |
+| Digital familiarity / wellbeing | `digital_familiarity_index` (sum ÷ 28 × 100), `who5_score` (sum × 4, 0–100), `swls_score` (sum, 5–35) |
+| Usability | `sus_score` (0–100) and `sus_1`…`sus_10` |
+| Workload | `tlx_raw_score` (unweighted mean of the six ratings) and the six `tlx_*` ratings |
+| Comprehension / independence | `ci_1`…`ci_10` (`ci_8` blank for T, `ci_9` blank for T and TA) |
+| Satisfaction | `satisfaction_k1`, `satisfaction_k2`, `satisfaction_k3` |
+| Wellbeing change | `baseline_happiness`, `post_task_happiness`, `happiness_change` (post − baseline) |
+| Task performance | `<task>_time_ms`, `<task>_success`, `<task>_errors`, `<task>_assistance` for `dashboard_view`, `add_product`, `share_profile`, `view_orders` (empty until live-task routing is built) |
+| Interface preference | `preferred_condition`, `helpful_component`, `most_difficult_part`, `what_would_help` |
 
-In R, this loads directly into `lme4`/`lmerTest` as `Yij ~ condition + gender + age_group + language + literacy_level + digital_experience + (1 | participant_code)`, matching the model in your original design diagram. For the binary `success` outcome, the same data frame works with `glmer(..., family = binomial)`.
+A note on translations: the WHO-5, SWLS, SUS and NASA-TLX wording in Hindi and Bengali is a working translation for piloting, not an officially validated one. Substitute validated translations (and confirm licensing/permission for SWLS and WHO-5) before publication-grade use.
 
----
-
-## A note on what this pilot doesn't cover
-
-Two things from the original study angle: the tasks are two standardized screens built specifically for this study (not the live production app), and eye tracking was excluded per your instruction. If a later phase of this research needs eye tracking or in-app-task telemetry from the real product rather than a study instrument, that's a separate build — flag it and we can scope it.

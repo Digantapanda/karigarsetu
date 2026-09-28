@@ -12,5 +12,10 @@ export const SEQUENCES: PilotCondition[][] = [
   ["TAI", "TA", "T"],
 ];
 
-export const TASK_KEYS = ["profile_info", "share_profile"] as const;
+// The four tasks run on the live app (see supabase/migrations/0006):
+//   1 dashboard_view  - land on the dashboard and look around
+//   2 add_product     - find "My Products" and add a product
+//   3 share_profile   - view own profile, share it by mail
+//   4 view_orders     - view orders, accept one and decline one
+export const TASK_KEYS = ["dashboard_view", "add_product", "share_profile", "view_orders"] as const;
 export type TaskKey = (typeof TASK_KEYS)[number];

@@ -401,3 +401,150 @@ export async function getPilotStats(): Promise<PilotStats> {
     perSequenceCounts,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Researcher-facing export
+// ---------------------------------------------------------------------------
+
+export type ExportRow = Record<string, string | number | boolean | null>;
+
+const TASK_KEYS_FOR_EXPORT: TaskKey[] = ["dashboard_view", "add_product", "share_profile", "view_orders"];
+
+/**
+ * One row per participant x condition (i.e. per pilot_sessions row) -- the
+ * unit a repeated-measures / mixed-effects model wants. Participant-level
+ * intake variables (Sections A-G) repeat on each of that participant's
+ * three rows; per-condition outcomes (SUS, TLX, comprehension, K1-K3,
+ * happiness change) vary by row; per-task metrics are flattened into
+ * task-prefixed columns and left blank when no task events exist yet.
+ *
+ * Deliberately EXCLUDES full_name and contact -- the analysis dataset
+ * should be de-identified. Use getPilotContactRows() for compensation.
+ */
+export async function getPilotExportRows(): Promise<ExportRow[]> {
+  const supabase = createServiceRoleClient();
+
+  const [{ data: participants }, { data: sessions }, { data: taskEvents }, { data: feedback }] = await Promise.all([
+    supabase.from("pilot_participants").select("*"),
+    supabase.from("pilot_sessions").select("*"),
+    supabase.from("pilot_task_events").select("*"),
+    supabase.from("pilot_final_feedback").select("*"),
+  ]);
+
+  const participantById = new Map((participants ?? []).map((p) => [p.id as string, p]));
+  const feedbackByParticipant = new Map((feedback ?? []).map((f) => [f.participant_id as string, f]));
+  const eventsBySession = new Map<string, Map<string, Record<string, unknown>>>();
+  for (const ev of taskEvents ?? []) {
+    const sid = ev.session_id as string;
+    if (!eventsBySession.has(sid)) eventsBySession.set(sid, new Map());
+    eventsBySession.get(sid)!.set(ev.task_key as string, ev);
+  }
+
+  const rows: ExportRow[] = [];
+
+  for (const s of sessions ?? []) {
+    const p = participantById.get(s.participant_id as string);
+    if (!p) continue;
+    const fb = feedbackByParticipant.get(p.id as string);
+
+    const row: ExportRow = {
+      participant_code: p.participant_code,
+      sequence_index: p.sequence_index,
+      condition: s.condition,
+      order_position: s.order_position,
+      session_language: p.language,
+      preferred_language_freetext: p.preferred_language_freetext ?? null,
+      device: p.device ?? null,
+      // Section A
+      age_bracket: p.age_bracket ?? null,
+      gender: p.gender_v2 ?? null,
+      gender_self_describe: p.gender_self_describe ?? null,
+      education: p.education ?? null,
+      occupation: p.occupation ?? null,
+      occupation_other: p.occupation_other ?? null,
+      residence: p.residence ?? null,
+      primary_language: p.primary_language_freetext ?? null,
+      other_languages: p.other_languages_freetext ?? null,
+      preferred_language_task: p.preferred_language_task_freetext ?? null,
+      // Section B
+      literacy_reading: p.literacy_reading ?? null,
+      literacy_writing: p.literacy_writing ?? null,
+      digital_text_comprehension: p.digital_text_comprehension ?? null,
+      // Section C
+      internet_access: p.internet_access ?? null,
+      phone_access: p.phone_access ?? null,
+      phone_exclusivity: p.phone_exclusivity ?? null,
+      internet_frequency: p.internet_frequency ?? null,
+      // Sections D-G (scores; raw item responses are in Supabase as jsonb)
+      digital_familiarity_index: p.digital_familiarity_index ?? null,
+      who5_score: p.who5_score ?? null,
+      swls_score: p.swls_score ?? null,
+      baseline_happiness: p.baseline_happiness ?? null,
+      // Per-condition outcomes (Sections H-L)
+      sus_score: s.sus_score ?? null,
+      tlx_mental: s.tlx_mental ?? null,
+      tlx_physical: s.tlx_physical ?? null,
+      tlx_temporal: s.tlx_temporal ?? null,
+      tlx_performance: s.tlx_performance ?? null,
+      tlx_effort: s.tlx_effort ?? null,
+      tlx_frustration: s.tlx_frustration ?? null,
+      tlx_raw_score: s.tlx_raw_score ?? null,
+      satisfaction_k1: s.satisfaction_k1 ?? null,
+      satisfaction_k2: s.satisfaction_k2 ?? null,
+      satisfaction_k3: s.satisfaction_k3 ?? null,
+      post_task_happiness: s.post_task_happiness ?? null,
+      happiness_change: s.happiness_change ?? null,
+      session_started_at: s.started_at ?? null,
+      session_completed_at: s.completed_at ?? null,
+    };
+
+    // Section J: one column per item (blank where the item didn't apply to this condition)
+    const ci = (s.comprehension_independence_responses ?? {}) as Record<string, number>;
+    for (let i = 1; i <= 10; i++) row[`ci_${i}`] = ci[`ci_${i}`] ?? null;
+
+    // Section H: raw SUS items
+    const sus = (s.sus_responses ?? {}) as Record<string, number>;
+    for (let i = 1; i <= 10; i++) row[`sus_${i}`] = sus[String(i)] ?? null;
+
+    // Per-task metrics (blank until the live-task routing is built)
+    const events = eventsBySession.get(s.id as string);
+    for (const key of TASK_KEYS_FOR_EXPORT) {
+      const ev = events?.get(key);
+      row[`${key}_time_ms`] = (ev?.time_ms as number) ?? null;
+      row[`${key}_success`] = (ev?.success as boolean) ?? null;
+      row[`${key}_errors`] = (ev?.error_count as number) ?? null;
+      row[`${key}_assistance`] = (ev?.assistance_requests as number) ?? null;
+    }
+
+    // Interface preference (M1-M4), once per participant
+    row.preferred_condition = fb?.preferred_condition ?? null;
+    row.helpful_component = fb?.helpful_component ?? null;
+    row.most_difficult_part = fb?.most_difficult_part ?? null;
+    row.what_would_help = fb?.what_would_help ?? null;
+
+    rows.push(row);
+  }
+
+  rows.sort((a, b) =>
+    String(a.participant_code).localeCompare(String(b.participant_code)) ||
+    Number(a.order_position) - Number(b.order_position)
+  );
+  return rows;
+}
+
+/** Name + contact per participant, for compensation/follow-up. Keep separate from the analysis dataset. */
+export async function getPilotContactRows(): Promise<ExportRow[]> {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .from("pilot_participants")
+    .select("participant_code, full_name, contact, created_at, completed_at")
+    .order("participant_code", { ascending: true });
+
+  return (data ?? []).map((p) => ({
+    participant_code: p.participant_code as string,
+    full_name: p.full_name as string,
+    contact: p.contact as string,
+    registered_at: p.created_at as string,
+    completed_at: (p.completed_at as string) ?? null,
+  }));
+}

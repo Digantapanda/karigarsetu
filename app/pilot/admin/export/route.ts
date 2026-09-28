@@ -1,84 +1,48 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { isPilotAdminAuthed } from "@/app/pilot/admin/actions";
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { getPilotExportRows, getPilotContactRows, type ExportRow } from "@/lib/domain/pilot";
 
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return "";
   const s = String(value);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export async function GET() {
+function toCsv(rows: ExportRow[]): string {
+  if (rows.length === 0) return "";
+  const headers = Object.keys(rows[0]);
+  const lines = [headers.join(",")];
+  for (const row of rows) {
+    lines.push(headers.map((h) => csvEscape(row[h])).join(","));
+  }
+  return lines.join("\n");
+}
+
+/**
+ * GET /pilot/admin/export            -> de-identified analysis dataset
+ *                                       (one row per participant x condition)
+ * GET /pilot/admin/export?type=contacts -> name + contact per participant,
+ *                                          for compensation; keep separate
+ *                                          from the analysis data.
+ * Both are gated by the admin session cookie and read via the service-role
+ * client only.
+ */
+export async function GET(request: NextRequest) {
   const authed = await isPilotAdminAuthed();
   if (!authed) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 
-  const supabase = createServiceRoleClient();
-
-  const { data: participants } = await supabase.from("pilot_participants").select("*");
-  const { data: sessions } = await supabase.from("pilot_sessions").select("*");
-  const { data: taskEvents } = await supabase.from("pilot_task_events").select("*");
-  const { data: feedback } = await supabase.from("pilot_final_feedback").select("*");
-
-  const sessionsById = new Map((sessions ?? []).map((s) => [s.id, s]));
-  const feedbackByParticipant = new Map((feedback ?? []).map((f) => [f.participant_id, f]));
-
-  // One row per task event, with participant/session/feedback columns
-  // flattened in -- this is the shape a mixed-effects model in R/Python
-  // wants: one row per (participant x condition x task).
-  const headers = [
-    "participant_code", "gender", "age_group", "language", "literacy_level", "digital_experience",
-    "sequence_index", "condition", "order_position", "task_key",
-    "started_at", "completed_at", "time_ms", "success", "error_count", "assistance_requests",
-    "comprehension_correct", "sus_score", "satisfaction_score",
-    "preferred_condition", "final_comments",
-  ];
-
-  const rows: string[] = [headers.join(",")];
-
-  for (const event of taskEvents ?? []) {
-    const session = sessionsById.get(event.session_id);
-    if (!session) continue;
-    const participant = (participants ?? []).find((p) => p.id === session.participant_id);
-    if (!participant) continue;
-    const fb = feedbackByParticipant.get(participant.id);
-
-    rows.push(
-      [
-        participant.participant_code,
-        participant.gender,
-        participant.age_group,
-        participant.language,
-        participant.literacy_level,
-        participant.digital_experience,
-        participant.sequence_index,
-        session.condition,
-        session.order_position,
-        event.task_key,
-        event.started_at,
-        event.completed_at,
-        event.time_ms,
-        event.success,
-        event.error_count,
-        event.assistance_requests,
-        event.comprehension_correct,
-        session.sus_score,
-        session.satisfaction_score,
-        fb?.preferred_condition,
-        fb?.comments,
-      ]
-        .map(csvEscape)
-        .join(",")
-    );
-  }
-
-  const csv = rows.join("\n");
+  const type = request.nextUrl.searchParams.get("type");
+  const isContacts = type === "contacts";
+  const rows = isContacts ? await getPilotContactRows() : await getPilotExportRows();
+  const csv = toCsv(rows);
+  const stamp = new Date().toISOString().slice(0, 10);
 
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="karigarsetu-pilot-export-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="karigarsetu-pilot-${isContacts ? "contacts" : "analysis"}-${stamp}.csv"`,
     },
   });
 }

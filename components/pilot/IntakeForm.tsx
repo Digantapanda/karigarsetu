@@ -94,7 +94,15 @@ function LikertRow({
 
 type FormState = Record<string, string | number>;
 
-export function IntakeForm({ pilotDict, locale }: { pilotDict: PilotDictionary; locale: Locale }) {
+export function IntakeForm({
+  pilotDict,
+  locale,
+  initialPreferredLanguage = "",
+}: {
+  pilotDict: PilotDictionary;
+  locale: Locale;
+  initialPreferredLanguage?: string;
+}) {
   const t = pilotDict.intake;
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<FormState>({});
@@ -121,6 +129,7 @@ export function IntakeForm({ pilotDict, locale }: { pilotDict: PilotDictionary; 
     const formData = new FormData();
     Object.entries(values).forEach(([k, v]) => formData.append(k, String(v)));
     formData.append("language", locale);
+    if (initialPreferredLanguage) formData.append("preferredLanguageFreetext", initialPreferredLanguage);
 
     startTransition(async () => {
       const result = await submitIntake(formData);

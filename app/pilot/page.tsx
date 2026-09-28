@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, Layers, MessageSquareText, Clock, ShieldCheck, Hand } from "lucide-react";
+import { ClipboardList, Layers, Clock, ShieldCheck, Hand } from "lucide-react";
 import { getPilotDictionary } from "@/lib/pilot/dictionary";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -16,19 +16,22 @@ export default async function PilotLandingPage({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-12">
-      <div className="flex justify-center gap-2">
-        {(Object.keys(LANG_LABELS) as Locale[]).map((code) => (
-          <Link
-            key={code}
-            href={`/pilot?lang=${code}`}
-            className={[
-              "rounded-lg px-3 py-1.5 text-sm font-medium",
-              code === locale ? "bg-indigo-700 text-khadi-50" : "bg-khadi-50 text-ink-700 hover:bg-ink-900/5",
-            ].join(" ")}
-          >
-            {LANG_LABELS[code]}
-          </Link>
-        ))}
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-sm font-medium text-ink-700">{t.interviewLanguageLabel}</p>
+        <div className="flex justify-center gap-2">
+          {(Object.keys(LANG_LABELS) as Locale[]).map((code) => (
+            <Link
+              key={code}
+              href={`/pilot?lang=${code}`}
+              className={[
+                "rounded-lg px-3 py-1.5 text-sm font-medium",
+                code === locale ? "bg-indigo-700 text-khadi-50" : "bg-khadi-50 text-ink-700 hover:bg-ink-900/5",
+              ].join(" ")}
+            >
+              {LANG_LABELS[code]}
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-ink-500/15 bg-khadi-100/60 p-6 shadow-sm sm:p-8">
@@ -82,13 +85,31 @@ export default async function PilotLandingPage({ searchParams }: PageProps) {
           </section>
         </div>
 
-        <Link
-          href={`/pilot/intake?lang=${locale}`}
-          className="mt-8 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-indigo-700 px-6 text-base font-semibold text-khadi-50 hover:bg-indigo-900"
-        >
-          <MessageSquareText size={18} aria-hidden="true" />
-          {t.continueButton}
-        </Link>
+        {/* Plain GET form: carries the session language and the free-text
+            preferred language forward to /pilot/intake as query params,
+            with no client JS or server state needed before a participant
+            record exists. */}
+        <form action="/pilot/intake" method="get" className="mt-8 flex flex-col gap-4">
+          <input type="hidden" name="lang" value={locale} />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="preferredLanguageFreetext" className="text-sm font-medium text-ink-900">
+              {t.preferredLanguageLabel}
+            </label>
+            <input
+              id="preferredLanguageFreetext"
+              name="preferredLanguageFreetext"
+              type="text"
+              className="h-12 w-full rounded-lg border border-ink-500/25 bg-khadi-50 px-4 text-base text-ink-900 focus:border-indigo-500"
+            />
+            <p className="text-sm text-ink-500">{t.preferredLanguageHint}</p>
+          </div>
+          <button
+            type="submit"
+            className="flex h-12 w-full items-center justify-center rounded-lg bg-indigo-700 px-6 text-base font-semibold text-khadi-50 hover:bg-indigo-900"
+          >
+            {t.continueButton}
+          </button>
+        </form>
       </div>
     </main>
   );

@@ -8,29 +8,23 @@ import {
   logAssistanceRequest,
   logTaskError,
   completeTaskEvent,
-  submitSusAndSatisfaction,
+  submitPostTaskBattery,
   submitFinalFeedback,
-  type PilotIntakeInput,
+  type PostTaskBatteryInput,
 } from "@/lib/domain/pilot";
-import type { TaskKey } from "@/lib/pilot/config";
-import type { PilotCondition } from "@/lib/pilot/config";
+import type { TaskKey, PilotCondition } from "@/lib/pilot/config";
 
 export async function submitIntake(formData: FormData) {
-  const input: PilotIntakeInput = {
-    fullName: String(formData.get("fullName") ?? ""),
-    contact: String(formData.get("contact") ?? ""),
-    gender: formData.get("gender") as PilotIntakeInput["gender"],
-    ageGroup: formData.get("ageGroup") as PilotIntakeInput["ageGroup"],
-    language: formData.get("language") as PilotIntakeInput["language"],
-    literacyLevel: formData.get("literacyLevel") as PilotIntakeInput["literacyLevel"],
-    digitalExperience: formData.get("digitalExperience") as PilotIntakeInput["digitalExperience"],
-  };
+  const raw: Record<string, string> = {};
+  formData.forEach((value, key) => {
+    raw[key] = String(value);
+  });
 
-  if (!input.fullName.trim() || !input.contact.trim()) {
+  if (!raw.fullName?.trim() || !raw.contact?.trim()) {
     return { success: false, error: "Please fill in your name and contact details." };
   }
 
-  const result = await createPilotParticipant(input);
+  const result = await createPilotParticipant(raw);
   if (!result.success || !result.participantCode) {
     return { success: false, error: result.error ?? "Something went wrong." };
   }
@@ -63,14 +57,14 @@ export async function recordTaskComplete(
   await completeTaskEvent(sessionId, taskKey, { success, comprehensionCorrect });
 }
 
-export async function submitSessionSurvey(
+export async function submitPostTaskBatteryAction(
   participantCode: string,
+  participantId: string,
   sessionId: string,
   orderPosition: number,
-  susResponses: Record<number, number>,
-  satisfactionScore: number
+  battery: PostTaskBatteryInput
 ) {
-  const result = await submitSusAndSatisfaction(sessionId, susResponses, satisfactionScore);
+  const result = await submitPostTaskBattery(sessionId, participantId, battery);
   if (!result.success) return result;
 
   if (orderPosition < 3) {
@@ -83,10 +77,18 @@ export async function submitSessionSurvey(
 export async function submitFinalFeedbackAction(
   participantId: string,
   participantCode: string,
-  preferredCondition: PilotCondition,
-  comments: string
+  preferredCondition: PilotCondition | "no_preference",
+  helpfulComponent: "text" | "audio" | "icons" | "combination" | "none",
+  mostDifficultPart: string,
+  whatWouldHelp: string
 ) {
-  const result = await submitFinalFeedback(participantId, preferredCondition, comments);
+  const result = await submitFinalFeedback(
+    participantId,
+    preferredCondition,
+    helpfulComponent,
+    mostDifficultPart,
+    whatWouldHelp
+  );
   if (!result.success) return result;
   redirect(`/pilot/debrief?code=${participantCode}`);
 }

@@ -1,17 +1,19 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { SEQUENCES, type PilotCondition, type TaskKey } from "@/lib/pilot/config";
 import { scoreSus } from "@/lib/pilot/sus";
+import {
+  scoreWho5, scoreSwls, scoreDigitalFamiliarity, scoreRawTlx,
+  WHO5_ITEMS, SWLS_ITEMS, DIGITAL_FAMILIARITY_ITEMS, SELF_EFFICACY_ITEMS,
+} from "@/lib/pilot/instruments";
 import type { Locale } from "@/lib/i18n/config";
 
-export interface PilotIntakeInput {
-  fullName: string;
-  contact: string;
-  gender: "female" | "male" | "other" | "prefer_not_to_say";
-  ageGroup: "18-30" | "31-50" | "51+";
-  language: Locale;
-  literacyLevel: "low" | "medium" | "high";
-  digitalExperience: "low" | "medium" | "high";
-}
+/**
+ * Raw form values keyed exactly as IntakeForm's field names -- parsed and
+ * scored here rather than typed strictly, since Sections D/E/F contribute
+ * a variable number of dynamically-keyed Likert responses (df_*, se_*,
+ * who5_*, swls_*) that don't fit a fixed interface cleanly.
+ */
+export type PilotIntakeRaw = Record<string, string>;
 
 export interface PilotActionResult {
   success: boolean;
@@ -22,14 +24,27 @@ function generateParticipantCode(sequentialNumber: number): string {
   return `P-${String(sequentialNumber).padStart(4, "0")}`;
 }
 
+function num(raw: PilotIntakeRaw, key: string): number | null {
+  const v = raw[key];
+  if (v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function str(raw: PilotIntakeRaw, key: string): string | null {
+  const v = raw[key];
+  return v && v.trim() ? v.trim() : null;
+}
+
 /**
  * Registers a new pilot participant, assigns one of the 6 counterbalanced
  * orderings via round-robin (participant N gets sequence N mod 6, which
  * spreads 60 or 72 participants perfectly evenly across all 6 sequences),
- * and creates the 3 pilot_sessions rows for their assigned order.
+ * scores the Section D/F instruments, and creates the 3 pilot_sessions
+ * rows for their assigned order.
  */
 export async function createPilotParticipant(
-  input: PilotIntakeInput
+  raw: PilotIntakeRaw
 ): Promise<PilotActionResult & { participantCode?: string }> {
   const supabase = createServiceRoleClient();
 
@@ -45,18 +60,68 @@ export async function createPilotParticipant(
   const sequenceIndex = (count ?? 0) % SEQUENCES.length;
   const participantCode = generateParticipantCode(sequentialNumber);
 
+  // Section D: Digital Familiarity
+  const dfResponses: Record<string, number> = {};
+  for (const item of DIGITAL_FAMILIARITY_ITEMS) {
+    const v = num(raw, `df_${item.id}`);
+    if (v !== null) dfResponses[item.id] = v;
+  }
+  const dfScore = scoreDigitalFamiliarity(dfResponses);
+
+  // Section E: Digital Self-Efficacy (stored raw, no composite requested)
+  const seResponses: Record<string, number> = {};
+  for (const item of SELF_EFFICACY_ITEMS) {
+    const v = num(raw, `se_${item.id}`);
+    if (v !== null) seResponses[item.id] = v;
+  }
+
+  // Section F: WHO-5 + SWLS
+  const who5Responses: Record<string, number> = {};
+  for (const item of WHO5_ITEMS) {
+    const v = num(raw, `who5_${item.id}`);
+    if (v !== null) who5Responses[item.id] = v;
+  }
+  const swlsResponses: Record<string, number> = {};
+  for (const item of SWLS_ITEMS) {
+    const v = num(raw, `swls_${item.id}`);
+    if (v !== null) swlsResponses[item.id] = v;
+  }
+
   const { data: participant, error } = await supabase
     .from("pilot_participants")
     .insert({
       participant_code: participantCode,
-      full_name: input.fullName,
-      contact: input.contact,
-      gender: input.gender,
-      age_group: input.ageGroup,
-      language: input.language,
-      literacy_level: input.literacyLevel,
-      digital_experience: input.digitalExperience,
+      full_name: str(raw, "fullName") ?? "",
+      contact: str(raw, "contact") ?? "",
+      language: (raw.language as Locale) ?? "en",
       sequence_index: sequenceIndex,
+      device: str(raw, "device"),
+      preferred_language_freetext: str(raw, "preferredLanguageFreetext"),
+      age_bracket: str(raw, "ageBracket"),
+      gender_v2: str(raw, "genderV2"),
+      gender_self_describe: str(raw, "genderSelfDescribe"),
+      education: str(raw, "education"),
+      occupation: str(raw, "occupation"),
+      occupation_other: str(raw, "occupationOther"),
+      residence: str(raw, "residence"),
+      primary_language_freetext: str(raw, "primaryLanguage"),
+      other_languages_freetext: str(raw, "otherLanguages"),
+      preferred_language_task_freetext: str(raw, "preferredLanguageTask"),
+      literacy_reading: num(raw, "literacyReading"),
+      literacy_writing: num(raw, "literacyWriting"),
+      digital_text_comprehension: num(raw, "digitalTextComprehension"),
+      internet_access: str(raw, "internetAccess"),
+      phone_access: str(raw, "phoneAccess"),
+      phone_exclusivity: str(raw, "phoneExclusivity"),
+      internet_frequency: str(raw, "internetFrequency"),
+      digital_familiarity_responses: dfResponses,
+      digital_familiarity_index: dfScore.index,
+      self_efficacy_responses: seResponses,
+      who5_responses: who5Responses,
+      who5_score: Object.keys(who5Responses).length === WHO5_ITEMS.length ? scoreWho5(who5Responses) : null,
+      swls_responses: swlsResponses,
+      swls_score: Object.keys(swlsResponses).length === SWLS_ITEMS.length ? scoreSwls(swlsResponses) : null,
+      baseline_happiness: num(raw, "baselineHappiness"),
     })
     .select()
     .single();
@@ -226,20 +291,52 @@ export async function completeTaskEvent(
   return { success: true };
 }
 
-export async function submitSusAndSatisfaction(
+export interface PostTaskBatteryInput {
+  susResponses: Record<number, number>;
+  tlxRatings: { mental: number; physical: number; temporal: number; performance: number; effort: number; frustration: number };
+  comprehensionResponses: Record<string, number>;
+  k1: number;
+  k2: number;
+  k3: number;
+  postTaskHappiness: number;
+}
+
+export async function submitPostTaskBattery(
   sessionId: string,
-  susResponses: Record<number, number>,
-  satisfactionScore: number
+  participantId: string,
+  input: PostTaskBatteryInput
 ): Promise<PilotActionResult> {
   const supabase = createServiceRoleClient();
-  const susScore = scoreSus(susResponses);
+  const susScore = scoreSus(input.susResponses);
+  const tlxScore = scoreRawTlx(input.tlxRatings);
+
+  const { data: participant } = await supabase
+    .from("pilot_participants")
+    .select("baseline_happiness")
+    .eq("id", participantId)
+    .maybeSingle();
+
+  const baseline = participant?.baseline_happiness as number | null;
+  const happinessChange = baseline != null ? input.postTaskHappiness - baseline : null;
 
   const { error } = await supabase
     .from("pilot_sessions")
     .update({
-      sus_responses: susResponses,
+      sus_responses: input.susResponses,
       sus_score: susScore,
-      satisfaction_score: satisfactionScore,
+      tlx_mental: input.tlxRatings.mental,
+      tlx_physical: input.tlxRatings.physical,
+      tlx_temporal: input.tlxRatings.temporal,
+      tlx_performance: input.tlxRatings.performance,
+      tlx_effort: input.tlxRatings.effort,
+      tlx_frustration: input.tlxRatings.frustration,
+      tlx_raw_score: tlxScore,
+      comprehension_independence_responses: input.comprehensionResponses,
+      satisfaction_k1: input.k1,
+      satisfaction_k2: input.k2,
+      satisfaction_k3: input.k3,
+      post_task_happiness: input.postTaskHappiness,
+      happiness_change: happinessChange,
       completed_at: new Date().toISOString(),
     })
     .eq("id", sessionId);
@@ -250,15 +347,19 @@ export async function submitSusAndSatisfaction(
 
 export async function submitFinalFeedback(
   participantId: string,
-  preferredCondition: PilotCondition,
-  comments: string
+  preferredCondition: PilotCondition | "no_preference",
+  helpfulComponent: "text" | "audio" | "icons" | "combination" | "none",
+  mostDifficultPart: string,
+  whatWouldHelp: string
 ): Promise<PilotActionResult> {
   const supabase = createServiceRoleClient();
 
   const { error } = await supabase.from("pilot_final_feedback").insert({
     participant_id: participantId,
     preferred_condition: preferredCondition,
-    comments: comments || null,
+    helpful_component: helpfulComponent,
+    most_difficult_part: mostDifficultPart || null,
+    what_would_help: whatWouldHelp || null,
   });
 
   if (error) return { success: false, error: "Could not save your feedback." };

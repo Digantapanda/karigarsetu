@@ -26,11 +26,28 @@ import { useSyncExternalStore } from "react";
 
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === "undefined") return false;
+  if (isPilotVoiceForcedOff()) return false;
   return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 }
 
 export function isSpeechSynthesisSupported(): boolean {
-  return typeof window !== "undefined" && "speechSynthesis" in window;
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
+  if (isPilotVoiceForcedOff()) return false;
+  return true;
+}
+
+/**
+ * During an active pilot session in condition T (text-only, no audio),
+ * voice controls must be completely absent, not just unused -- the study
+ * is specifically comparing conditions with and without audio, so leaving
+ * the speaker/mic available (even if the participant doesn't touch them)
+ * would blur that comparison. lib/pilot/session-cookie.ts sets this flag
+ * client-readable, synchronously checkable here without turning every
+ * support check into an async cookie read.
+ */
+function isPilotVoiceForcedOff(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split("; ").some((c) => c === "pilot_voice_off=1");
 }
 
 function getSpeechRecognitionCtor(): (new () => SpeechRecognitionLike) | null {

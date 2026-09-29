@@ -1,6 +1,8 @@
 "use server";
 
 import { advancePilotTaskIfActive } from "@/lib/pilot/task-hooks";
+import { getActivePilotSession, taskKeyForPosition } from "@/lib/pilot/session-cookie";
+import { logAssistanceRequest } from "@/lib/domain/pilot";
 import type { TaskKey } from "@/lib/pilot/config";
 
 /**
@@ -12,4 +14,11 @@ import type { TaskKey } from "@/lib/pilot/config";
  */
 export async function reportPilotTask(taskKey: TaskKey) {
   await advancePilotTaskIfActive(taskKey);
+}
+
+/** Help button on the floating task banner -- logs against whichever task is currently active. */
+export async function recordPilotAssistance() {
+  const session = await getActivePilotSession();
+  if (!session) return;
+  await logAssistanceRequest(session.sessionId, taskKeyForPosition(session.taskPosition));
 }

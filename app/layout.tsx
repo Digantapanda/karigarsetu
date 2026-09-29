@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
+import { PilotTaskBanner } from "@/components/pilot/PilotTaskBanner";
+import { getActivePilotSession } from "@/lib/pilot/session-cookie";
+import { getPilotDictionary } from "@/lib/pilot/dictionary";
 
 // Fraunces: a display serif with real character for headings and craftsman names.
 const fraunces = Fraunces({
@@ -25,13 +28,23 @@ export const metadata: Metadata = {
     "Create your verified digital craftsman profile and share it directly with customers.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const pilotSession = await getActivePilotSession();
+
   return (
     <html
       lang="en"
       className={`${fraunces.variable} ${plexSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-khadi-200 text-ink-900">{children}</body>
+      <body className="min-h-full flex flex-col bg-khadi-200 text-ink-900">
+        {pilotSession && (
+          <PilotTaskBanner
+            taskPosition={pilotSession.taskPosition}
+            pilotDict={getPilotDictionary(pilotSession.locale)}
+          />
+        )}
+        {children}
+      </body>
     </html>
   );
 }

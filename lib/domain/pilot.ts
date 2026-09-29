@@ -427,14 +427,79 @@ const TASK_KEYS_FOR_EXPORT: TaskKey[] = ["dashboard_view", "add_product", "share
  * Deliberately EXCLUDES full_name and contact -- the analysis dataset
  * should be de-identified. Use getPilotContactRows() for compensation.
  */
+// ---------------------------------------------------------------------------
+// Pointer-event summaries -- turns the raw batched events collected by
+// PilotPointerTracker into per-task aggregate metrics for the analysis
+// export ("navigation efficiency": click count, hover dwell, scroll
+// activity, and total on-screen cursor/touch distance travelled).
+// ---------------------------------------------------------------------------
+
+interface PointerTaskSummary {
+  clicks: number;
+  hovers: number;
+  avgHoverMs: number | null;
+  scrolls: number;
+  moveSamples: number;
+  pathDistancePx: number;
+}
+
+function emptyPointerSummary(): PointerTaskSummary {
+  return { clicks: 0, hovers: 0, avgHoverMs: null, scrolls: 0, moveSamples: 0, pathDistancePx: 0 };
+}
+
+/** One summary per (session_id, task_key), built from every pilot_pointer_events batch row for that pair. */
+async function getPointerEventSummaries(): Promise<Map<string, PointerTaskSummary>> {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase.from("pilot_pointer_events").select("session_id, task_key, events");
+
+  const bySessionTask = new Map<string, PointerTaskSummary>();
+  const hoverDurationSums = new Map<string, { sum: number; count: number }>();
+
+  for (const row of data ?? []) {
+    const key = `${row.session_id}::${row.task_key}`;
+    const summary = bySessionTask.get(key) ?? emptyPointerSummary();
+    const events = (row.events ?? []) as PilotPointerEvent[];
+
+    let lastMove: { x: number; y: number } | null = null;
+    for (const ev of events) {
+      if (ev.type === "click") summary.clicks += 1;
+      else if (ev.type === "scroll") summary.scrolls += 1;
+      else if (ev.type === "hover") {
+        summary.hovers += 1;
+        const acc = hoverDurationSums.get(key) ?? { sum: 0, count: 0 };
+        acc.sum += ev.durationMs;
+        acc.count += 1;
+        hoverDurationSums.set(key, acc);
+      } else if (ev.type === "move") {
+        summary.moveSamples += 1;
+        if (lastMove) {
+          summary.pathDistancePx += Math.hypot(ev.x - lastMove.x, ev.y - lastMove.y);
+        }
+        lastMove = { x: ev.x, y: ev.y };
+      }
+    }
+
+    bySessionTask.set(key, summary);
+  }
+
+  for (const [key, summary] of bySessionTask) {
+    const acc = hoverDurationSums.get(key);
+    summary.avgHoverMs = acc && acc.count > 0 ? Math.round(acc.sum / acc.count) : null;
+    summary.pathDistancePx = Math.round(summary.pathDistancePx);
+  }
+
+  return bySessionTask;
+}
+
 export async function getPilotExportRows(): Promise<ExportRow[]> {
   const supabase = createServiceRoleClient();
 
-  const [{ data: participants }, { data: sessions }, { data: taskEvents }, { data: feedback }] = await Promise.all([
+  const [{ data: participants }, { data: sessions }, { data: taskEvents }, { data: feedback }, pointerSummaries] = await Promise.all([
     supabase.from("pilot_participants").select("*"),
     supabase.from("pilot_sessions").select("*"),
     supabase.from("pilot_task_events").select("*"),
     supabase.from("pilot_final_feedback").select("*"),
+    getPointerEventSummaries(),
   ]);
 
   const participantById = new Map((participants ?? []).map((p) => [p.id as string, p]));
@@ -512,7 +577,9 @@ export async function getPilotExportRows(): Promise<ExportRow[]> {
     const sus = (s.sus_responses ?? {}) as Record<string, number>;
     for (let i = 1; i <= 10; i++) row[`sus_${i}`] = sus[String(i)] ?? null;
 
-    // Per-task metrics (blank until the live-task routing is built)
+    // Per-task metrics, including pointer/touch summaries ("navigation
+    // efficiency": clicks, hover dwell, scroll activity, cursor/touch
+    // path distance) alongside the timing/success metrics already there.
     const events = eventsBySession.get(s.id as string);
     for (const key of TASK_KEYS_FOR_EXPORT) {
       const ev = events?.get(key);
@@ -520,6 +587,14 @@ export async function getPilotExportRows(): Promise<ExportRow[]> {
       row[`${key}_success`] = (ev?.success as boolean) ?? null;
       row[`${key}_errors`] = (ev?.error_count as number) ?? null;
       row[`${key}_assistance`] = (ev?.assistance_requests as number) ?? null;
+
+      const pointer = pointerSummaries.get(`${s.id}::${key}`);
+      row[`${key}_clicks`] = pointer?.clicks ?? null;
+      row[`${key}_hovers`] = pointer?.hovers ?? null;
+      row[`${key}_avg_hover_ms`] = pointer?.avgHoverMs ?? null;
+      row[`${key}_scrolls`] = pointer?.scrolls ?? null;
+      row[`${key}_move_samples`] = pointer?.moveSamples ?? null;
+      row[`${key}_path_distance_px`] = pointer?.pathDistancePx ?? null;
     }
 
     // Interface preference (M1-M4), once per participant
@@ -644,5 +719,39 @@ export async function logPilotPointerEventBatch(
     events,
     batch_started_at: batchStartedAt,
     batch_ended_at: batchEndedAt,
+  });
+}
+
+/**
+ * Raw pointer-event batches, joined with participant_code and condition,
+ * for researchers who want event-level detail (paths, heatmaps) beyond
+ * the per-task summary columns in getPilotExportRows(). Returned as JSON
+ * rather than flattened to CSV -- each row's `events` array has a
+ * variable shape (move/click/hover/scroll) that doesn't flatten cleanly.
+ */
+export async function getAllPointerEventBatches(): Promise<
+  { participantCode: string; condition: PilotCondition; taskKey: TaskKey; events: PilotPointerEvent[]; batchStartedAt: string; batchEndedAt: string }[]
+> {
+  const supabase = createServiceRoleClient();
+  const [{ data: batches }, { data: sessions }, { data: participants }] = await Promise.all([
+    supabase.from("pilot_pointer_events").select("*").order("batch_started_at", { ascending: true }),
+    supabase.from("pilot_sessions").select("id, participant_id, condition"),
+    supabase.from("pilot_participants").select("id, participant_code"),
+  ]);
+
+  const sessionById = new Map((sessions ?? []).map((s) => [s.id as string, s]));
+  const codeByParticipantId = new Map((participants ?? []).map((p) => [p.id as string, p.participant_code as string]));
+
+  return (batches ?? []).map((b) => {
+    const session = sessionById.get(b.session_id as string);
+    const participantCode = session ? codeByParticipantId.get(session.participant_id as string) ?? "unknown" : "unknown";
+    return {
+      participantCode,
+      condition: (session?.condition as PilotCondition) ?? "T",
+      taskKey: b.task_key as TaskKey,
+      events: (b.events ?? []) as PilotPointerEvent[],
+      batchStartedAt: b.batch_started_at as string,
+      batchEndedAt: b.batch_ended_at as string,
+    };
   });
 }

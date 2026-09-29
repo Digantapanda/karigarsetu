@@ -100,7 +100,19 @@ export default async function PilotAdminPage() {
         >
           Download contacts CSV
         </a>
+        <a
+          href="/pilot/admin/export?type=pointer-events"
+          className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-indigo-700 px-6 text-base font-semibold text-indigo-700 hover:bg-indigo-300/10"
+        >
+          Download pointer events (JSON)
+        </a>
       </div>
+      <p className="text-sm text-ink-500">
+        The analysis CSV now includes per-task click/hover/scroll counts and cursor path distance
+        alongside timing and success. The pointer-events JSON has the raw event-level data (individual
+        move samples, click coordinates, hover start/end) for path or heatmap analysis beyond those
+        summary columns.
+      </p>
       <p className="text-sm text-ink-500">
         The analysis CSV is de-identified (no names or contact details) with one row per participant ×
         condition, ready for the mixed-effects models in the study design. Names and contacts are in a

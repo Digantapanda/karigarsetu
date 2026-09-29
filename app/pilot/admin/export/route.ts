@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isPilotAdminAuthed } from "@/app/pilot/admin/actions";
-import { getPilotExportRows, getPilotContactRows, type ExportRow } from "@/lib/domain/pilot";
+import { getPilotExportRows, getPilotContactRows, getAllPointerEventBatches, type ExportRow } from "@/lib/domain/pilot";
 
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -19,13 +19,22 @@ function toCsv(rows: ExportRow[]): string {
 }
 
 /**
- * GET /pilot/admin/export            -> de-identified analysis dataset
- *                                       (one row per participant x condition)
- * GET /pilot/admin/export?type=contacts -> name + contact per participant,
- *                                          for compensation; keep separate
- *                                          from the analysis data.
- * Both are gated by the admin session cookie and read via the service-role
- * client only.
+ * GET /pilot/admin/export                    -> de-identified analysis CSV
+ *                                                (one row per participant x
+ *                                                condition, including
+ *                                                per-task pointer/touch
+ *                                                summary columns: clicks,
+ *                                                hovers, avg hover ms,
+ *                                                scrolls, path distance)
+ * GET /pilot/admin/export?type=contacts       -> name + contact per
+ *                                                participant, for
+ *                                                compensation
+ * GET /pilot/admin/export?type=pointer-events -> raw event-level JSON
+ *                                                (paths/heatmaps), since
+ *                                                the per-event data doesn't
+ *                                                flatten to CSV cleanly
+ * All three are gated by the admin session cookie and read via the
+ * service-role client only.
  */
 export async function GET(request: NextRequest) {
   const authed = await isPilotAdminAuthed();
@@ -34,10 +43,21 @@ export async function GET(request: NextRequest) {
   }
 
   const type = request.nextUrl.searchParams.get("type");
+  const stamp = new Date().toISOString().slice(0, 10);
+
+  if (type === "pointer-events") {
+    const batches = await getAllPointerEventBatches();
+    return new NextResponse(JSON.stringify(batches, null, 2), {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Disposition": `attachment; filename="karigarsetu-pilot-pointer-events-${stamp}.json"`,
+      },
+    });
+  }
+
   const isContacts = type === "contacts";
   const rows = isContacts ? await getPilotContactRows() : await getPilotExportRows();
   const csv = toCsv(rows);
-  const stamp = new Date().toISOString().slice(0, 10);
 
   return new NextResponse(csv, {
     headers: {

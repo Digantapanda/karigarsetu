@@ -65,6 +65,12 @@ alter table pilot_participants
   add column if not exists demo_craftsman_id uuid;
 
 -- ---- Widen task_key: the revised design runs tasks on the real app ----
+-- Any existing rows from the old standalone-screen task ('profile_info')
+-- predate real participants (this pilot hasn't launched yet) and don't
+-- map cleanly onto the new four-task design, so they're cleared rather
+-- than migrated. 'share_profile' is unaffected -- it exists in both.
+delete from pilot_task_events where task_key = 'profile_info';
+
 alter table pilot_task_events
   drop constraint if exists pilot_task_events_task_key_check;
 

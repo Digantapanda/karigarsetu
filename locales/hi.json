@@ -87,7 +87,8 @@
     "priceOnRequest": "मांग पर मूल्य",
     "outOfStockBadge": "स्टॉक में नहीं",
     "qrPrintHint": "इसे दुकान बोर्ड, विजिटिंग कार्ड, या उत्पाद पैकेजिंग पर प्रिंट करें।",
-    "downloadQr": "क्यूआर कोड डाउनलोड करें"
+    "downloadQr": "क्यूआर कोड डाउनलोड करें",
+    "shareByEmail": "ईमेल द्वारा साझा करें"
   },
   "dashboardPage": {
     "eyebrow": "डैशबोर्ड",

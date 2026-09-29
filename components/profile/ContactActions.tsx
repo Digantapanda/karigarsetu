@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { QRCodeCard } from "@/components/profile/QRCodeCard";
+import { reportPilotTask } from "@/app/pilot/task-actions";
 import type { Dictionary } from "@/lib/i18n/config";
 
 interface ContactActionsProps {
@@ -53,6 +54,13 @@ export function ContactActions({ craftsmanName, profileUrl, shopContactNumber, d
     }
   }
 
+  function handleMailShareClick() {
+    // Fire-and-forget: does nothing outside an active pilot session (see
+    // lib/pilot/task-hooks.ts), and doesn't block the mailto: link below
+    // from opening the participant's mail client normally either way.
+    void reportPilotTask("share_profile");
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-3">
@@ -77,6 +85,14 @@ export function ContactActions({ craftsmanName, profileUrl, shopContactNumber, d
             <Button variant="secondary">{dict.profilePage.requestOrder}</Button>
           </a>
         )}
+        <a
+          href={`mailto:?subject=${encodeURIComponent(`${craftsmanName} on KarigarSetu`)}&body=${encodeURIComponent(
+            `Take a look at this craftsman profile on KarigarSetu: ${profileUrl}`
+          )}`}
+          onClick={handleMailShareClick}
+        >
+          <Button variant="secondary">{dict.profilePage.shareByEmail}</Button>
+        </a>
       </div>
 
       <div className="flex flex-wrap gap-3">

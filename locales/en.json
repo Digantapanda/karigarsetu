@@ -87,7 +87,8 @@
     "priceOnRequest": "Price on request",
     "outOfStockBadge": "Out of stock",
     "qrPrintHint": "Print this on shop boards, visiting cards, or product packaging.",
-    "downloadQr": "Download QR Code"
+    "downloadQr": "Download QR Code",
+    "shareByEmail": "Share by Email"
   },
   "dashboardPage": {
     "eyebrow": "Dashboard",

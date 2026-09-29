@@ -26,15 +26,7 @@ export default async function PilotRunPage({ params }: PageProps) {
 
   return (
     <VoiceConfigProvider lang={SPEECH_LOCALE[session.language]} dict={dict}>
-      <PilotRunner
-        sessionId={session.sessionId}
-        participantId={session.participantId}
-        participantCode={code}
-        condition={session.condition}
-        orderPosition={session.orderPosition}
-        locale={session.language}
-        pilotDict={pilotDict}
-      />
+      <PilotRunner participantCode={code} orderPosition={session.orderPosition} pilotDict={pilotDict} />
     </VoiceConfigProvider>
   );
 }

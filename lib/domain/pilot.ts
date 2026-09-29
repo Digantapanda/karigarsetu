@@ -190,18 +190,24 @@ export interface PilotParticipantLookup {
   id: string;
   language: Locale;
   sequenceIndex: number;
+  fullName: string;
 }
 
 export async function getPilotParticipantByCode(participantCode: string): Promise<PilotParticipantLookup | null> {
   const supabase = createServiceRoleClient();
   const { data } = await supabase
     .from("pilot_participants")
-    .select("id, language, sequence_index")
+    .select("id, language, sequence_index, full_name")
     .eq("participant_code", participantCode)
     .maybeSingle();
 
   if (!data) return null;
-  return { id: data.id as string, language: data.language as Locale, sequenceIndex: data.sequence_index as number };
+  return {
+    id: data.id as string,
+    language: data.language as Locale,
+    sequenceIndex: data.sequence_index as number,
+    fullName: data.full_name as string,
+  };
 }
 
 export async function markSessionStarted(sessionId: string): Promise<void> {
@@ -260,7 +266,7 @@ export async function logTaskError(sessionId: string, taskKey: TaskKey): Promise
 export async function completeTaskEvent(
   sessionId: string,
   taskKey: TaskKey,
-  input: { success: boolean; comprehensionCorrect: boolean }
+  input: { success: boolean; comprehensionCorrect?: boolean }
 ): Promise<PilotActionResult> {
   const supabase = createServiceRoleClient();
 
@@ -281,7 +287,7 @@ export async function completeTaskEvent(
     .update({
       completed_at: completedAt.toISOString(),
       success: input.success,
-      comprehension_correct: input.comprehensionCorrect,
+      comprehension_correct: input.comprehensionCorrect ?? null,
       time_ms: timeMs,
     })
     .eq("session_id", sessionId)

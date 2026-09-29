@@ -8,12 +8,17 @@ import {
   deleteProduct,
   updateStockQuantity,
 } from "@/lib/domain/products";
+import { advancePilotTaskIfActive } from "@/lib/pilot/task-hooks";
 import type { ProductFormValues } from "@/lib/validation/product";
 import type { Product } from "@/types/domain";
 
 export async function submitCreateProduct(input: ProductFormValues) {
   const result = await createProduct(input);
-  if (result.success) revalidatePath("/dashboard/products");
+  if (result.success) {
+    revalidatePath("/dashboard/products");
+    // No-op outside an active pilot session (see lib/pilot/task-hooks.ts).
+    await advancePilotTaskIfActive("add_product");
+  }
   return result;
 }
 

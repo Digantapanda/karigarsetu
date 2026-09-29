@@ -617,3 +617,32 @@ export async function decideMockOrder(
   if (error) return { success: false, error: "Could not save your decision." };
   return { success: true };
 }
+
+// ---------------------------------------------------------------------------
+// Detailed pointer/touch tracking ("navigation efficiency")
+// ---------------------------------------------------------------------------
+
+export type PilotPointerEvent =
+  | { type: "move"; x: number; y: number; t: number }
+  | { type: "click"; x: number; y: number; t: number; target: string }
+  | { type: "hover"; x: number; y: number; t: number; target: string; durationMs: number }
+  | { type: "scroll"; y: number; t: number };
+
+/** One row per batch flush (not per event) -- keeps write volume reasonable across 60-72 participants. */
+export async function logPilotPointerEventBatch(
+  sessionId: string,
+  taskKey: TaskKey,
+  events: PilotPointerEvent[],
+  batchStartedAt: string,
+  batchEndedAt: string
+): Promise<void> {
+  if (events.length === 0) return;
+  const supabase = createServiceRoleClient();
+  await supabase.from("pilot_pointer_events").insert({
+    session_id: sessionId,
+    task_key: taskKey,
+    events,
+    batch_started_at: batchStartedAt,
+    batch_ended_at: batchEndedAt,
+  });
+}

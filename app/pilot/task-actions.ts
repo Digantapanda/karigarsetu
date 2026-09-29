@@ -2,7 +2,7 @@
 
 import { advancePilotTaskIfActive } from "@/lib/pilot/task-hooks";
 import { getActivePilotSession, taskKeyForPosition } from "@/lib/pilot/session-cookie";
-import { logAssistanceRequest } from "@/lib/domain/pilot";
+import { logAssistanceRequest, logPilotPointerEventBatch, type PilotPointerEvent } from "@/lib/domain/pilot";
 import type { TaskKey } from "@/lib/pilot/config";
 
 /**
@@ -21,4 +21,25 @@ export async function recordPilotAssistance() {
   const session = await getActivePilotSession();
   if (!session) return;
   await logAssistanceRequest(session.sessionId, taskKeyForPosition(session.taskPosition));
+}
+
+/**
+ * Flushes a batch of client-collected pointer/touch events (position
+ * samples, clicks, hover dwell, scroll) for the participant's current
+ * task. No-op outside an active pilot session.
+ */
+export async function submitPilotPointerEventBatch(
+  events: PilotPointerEvent[],
+  batchStartedAt: string,
+  batchEndedAt: string
+) {
+  const session = await getActivePilotSession();
+  if (!session) return;
+  await logPilotPointerEventBatch(
+    session.sessionId,
+    taskKeyForPosition(session.taskPosition),
+    events,
+    batchStartedAt,
+    batchEndedAt
+  );
 }

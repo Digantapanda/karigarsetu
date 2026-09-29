@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { PilotTaskBanner } from "@/components/pilot/PilotTaskBanner";
+import { PilotPointerTracker } from "@/components/pilot/PilotPointerTracker";
 import { getActivePilotSession } from "@/lib/pilot/session-cookie";
 import { getPilotDictionary } from "@/lib/pilot/dictionary";
 
@@ -38,10 +39,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="min-h-full flex flex-col bg-khadi-200 text-ink-900">
         {pilotSession && (
-          <PilotTaskBanner
-            taskPosition={pilotSession.taskPosition}
-            pilotDict={getPilotDictionary(pilotSession.locale)}
-          />
+          <>
+            <PilotTaskBanner
+              taskPosition={pilotSession.taskPosition}
+              pilotDict={getPilotDictionary(pilotSession.locale)}
+            />
+            <PilotPointerTracker />
+          </>
         )}
         {children}
       </body>

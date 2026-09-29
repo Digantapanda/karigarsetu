@@ -554,3 +554,66 @@ export async function getPilotContactRows(): Promise<ExportRow[]> {
     completed_at: (p.completed_at as string) ?? null,
   }));
 }
+
+// ---------------------------------------------------------------------------
+// Task 4: mock orders (pilot-only -- not a real orders system)
+// ---------------------------------------------------------------------------
+
+export interface MockOrder {
+  id: string;
+  customerName: string;
+  productName: string;
+  quantity: number;
+  status: "pending" | "accepted" | "declined";
+}
+
+/** Creates the 2 seeded mock orders for this session's Task 4, if they don't already exist. */
+export async function getOrSeedMockOrders(sessionId: string): Promise<MockOrder[]> {
+  const supabase = createServiceRoleClient();
+
+  const { data: existing } = await supabase
+    .from("pilot_mock_orders")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: true });
+
+  if (existing && existing.length > 0) {
+    return existing.map((o) => ({
+      id: o.id as string,
+      customerName: o.customer_name as string,
+      productName: o.product_name as string,
+      quantity: o.quantity as number,
+      status: o.status as MockOrder["status"],
+    }));
+  }
+
+  const seedRows = [
+    { session_id: sessionId, customer_name: "Anita Sharma", product_name: "Hand-painted clay pot", quantity: 2 },
+    { session_id: sessionId, customer_name: "Ravi Kumar", product_name: "Bamboo basket set", quantity: 1 },
+  ];
+
+  const { data: created, error } = await supabase.from("pilot_mock_orders").insert(seedRows).select("*");
+  if (error || !created) return [];
+
+  return created.map((o) => ({
+    id: o.id as string,
+    customerName: o.customer_name as string,
+    productName: o.product_name as string,
+    quantity: o.quantity as number,
+    status: o.status as MockOrder["status"],
+  }));
+}
+
+export async function decideMockOrder(
+  orderId: string,
+  status: "accepted" | "declined"
+): Promise<PilotActionResult> {
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase
+    .from("pilot_mock_orders")
+    .update({ status, decided_at: new Date().toISOString() })
+    .eq("id", orderId);
+
+  if (error) return { success: false, error: "Could not save your decision." };
+  return { success: true };
+}

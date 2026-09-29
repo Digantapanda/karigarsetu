@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserPen, ExternalLink, Share2, Package, RefreshCw, Award } from "lucide-react";
+import { UserPen, ExternalLink, Share2, Package, RefreshCw, Award, ShoppingBag } from "lucide-react";
 import type { ComponentType } from "react";
 import { SpeakerButton } from "@/components/ui/SpeakerButton";
 import type { Dictionary } from "@/lib/i18n/config";
@@ -10,15 +10,26 @@ interface IconTile {
   icon: ComponentType<{ size?: number; className?: string }>;
 }
 
-function tiles(dict: Dictionary, profileSlug: string): IconTile[] {
-  return [
+function tiles(dict: Dictionary, profileSlug: string, pilotMode: boolean): IconTile[] {
+  const base: IconTile[] = [
     { label: dict.dashboardPage.editProfile, href: "/dashboard/profile", icon: UserPen },
     { label: dict.dashboardPage.myProducts, href: "/dashboard/products", icon: Package },
     { label: dict.profileEditPage.awardsSection, href: "/dashboard/profile", icon: Award },
     { label: dict.dashboardPage.catalogueSync, href: "/dashboard/catalogue-sync", icon: RefreshCw },
-    { label: dict.dashboardPage.shareProfile, href: `/craftsman/${profileSlug}`, icon: Share2 },
-    { label: dict.dashboardPage.viewMyProfile, href: `/craftsman/${profileSlug}`, icon: ExternalLink },
   ];
+
+  // Share Profile is hidden during an active pilot session, same as the
+  // Text Mode dashboard -- see QuickActions.tsx for why.
+  if (!pilotMode) {
+    base.push({ label: dict.dashboardPage.shareProfile, href: `/craftsman/${profileSlug}`, icon: Share2 });
+  }
+  base.push({ label: dict.dashboardPage.viewMyProfile, href: `/craftsman/${profileSlug}`, icon: ExternalLink });
+
+  if (pilotMode) {
+    base.push({ label: dict.dashboardPage.viewOrders, href: "/dashboard/orders", icon: ShoppingBag });
+  }
+
+  return base;
 }
 
 /**
@@ -33,33 +44,37 @@ export function IconDashboard({
   profileSlug,
   completionPercent,
   dict,
+  pilotMode = false,
 }: {
   profileSlug: string;
   completionPercent: number;
   dict: Dictionary;
+  pilotMode?: boolean;
 }) {
   return (
     <div className="flex flex-col items-center gap-8">
-      <div className="relative flex h-32 w-32 items-center justify-center">
-        <svg viewBox="0 0 100 100" className="h-32 w-32 -rotate-90">
-          <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-ink-500)" strokeOpacity="0.15" strokeWidth="10" />
-          <circle
-            cx="50"
-            cy="50"
-            r="42"
-            fill="none"
-            stroke="var(--color-turmeric-500)"
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 42}
-            strokeDashoffset={2 * Math.PI * 42 * (1 - completionPercent / 100)}
-          />
-        </svg>
-        <span className="absolute font-display text-2xl font-semibold text-ink-900">{completionPercent}%</span>
-      </div>
+      {!pilotMode && (
+        <div className="relative flex h-32 w-32 items-center justify-center">
+          <svg viewBox="0 0 100 100" className="h-32 w-32 -rotate-90">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-ink-500)" strokeOpacity="0.15" strokeWidth="10" />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke="var(--color-turmeric-500)"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 42}
+              strokeDashoffset={2 * Math.PI * 42 * (1 - completionPercent / 100)}
+            />
+          </svg>
+          <span className="absolute font-display text-2xl font-semibold text-ink-900">{completionPercent}%</span>
+        </div>
+      )}
 
       <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3">
-        {tiles(dict, profileSlug).map((tile) => {
+        {tiles(dict, profileSlug, pilotMode).map((tile) => {
           const Icon = tile.icon;
           return (
             <div key={tile.label} className="relative">

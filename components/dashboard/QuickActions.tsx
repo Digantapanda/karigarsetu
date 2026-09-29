@@ -10,34 +10,63 @@ interface ActionTile {
   comingSoon?: boolean;
 }
 
-function tiles(dict: Dictionary, profileSlug?: string): ActionTile[] {
-  return [
+function tiles(dict: Dictionary, profileSlug: string | undefined, pilotMode: boolean): ActionTile[] {
+  const base: ActionTile[] = [
     { label: dict.dashboardPage.editProfile, href: "/dashboard/profile", icon: UserPen },
     {
       label: dict.dashboardPage.viewMyProfile,
       href: profileSlug ? `/craftsman/${profileSlug}` : undefined,
       icon: ExternalLink,
     },
-    {
-      label: dict.dashboardPage.shareProfile,
-      href: profileSlug ? `/craftsman/${profileSlug}` : undefined,
-      icon: Share2,
-    },
-    {
-      label: dict.dashboardPage.generateQr,
-      href: profileSlug ? `/craftsman/${profileSlug}` : undefined,
-      icon: QrCode,
-    },
-    { label: dict.dashboardPage.myProducts, href: "/dashboard/products", icon: Package },
-    { label: dict.dashboardPage.catalogueSync, href: "/dashboard/catalogue-sync", icon: RefreshCw },
-    { label: dict.dashboardPage.viewOrders, icon: ShoppingBag, comingSoon: true },
   ];
+
+  // Share Profile and Generate QR are hidden during an active pilot
+  // session -- Task 4 in the study design specifically asks participants
+  // to locate orders, and these two tiles aren't part of any pilot task.
+  if (!pilotMode) {
+    base.push(
+      {
+        label: dict.dashboardPage.shareProfile,
+        href: profileSlug ? `/craftsman/${profileSlug}` : undefined,
+        icon: Share2,
+      },
+      {
+        label: dict.dashboardPage.generateQr,
+        href: profileSlug ? `/craftsman/${profileSlug}` : undefined,
+        icon: QrCode,
+      }
+    );
+  }
+
+  base.push(
+    { label: dict.dashboardPage.myProducts, href: "/dashboard/products", icon: Package },
+    { label: dict.dashboardPage.catalogueSync, href: "/dashboard/catalogue-sync", icon: RefreshCw }
+  );
+
+  // View Orders is a real, clickable tile only during a pilot session
+  // (pointing at the mock Orders screen); for real craftsmen it stays a
+  // disabled "coming soon" tile, since Orders isn't an actual feature yet.
+  base.push(
+    pilotMode
+      ? { label: dict.dashboardPage.viewOrders, href: "/dashboard/orders", icon: ShoppingBag }
+      : { label: dict.dashboardPage.viewOrders, icon: ShoppingBag, comingSoon: true }
+  );
+
+  return base;
 }
 
-export function QuickActions({ profileSlug, dict }: { profileSlug?: string; dict: Dictionary }) {
+export function QuickActions({
+  profileSlug,
+  dict,
+  pilotMode = false,
+}: {
+  profileSlug?: string;
+  dict: Dictionary;
+  pilotMode?: boolean;
+}) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      {tiles(dict, profileSlug).map((tile) => {
+      {tiles(dict, profileSlug, pilotMode).map((tile) => {
         const Icon = tile.icon;
         const disabled = tile.comingSoon || !tile.href;
         const content = (

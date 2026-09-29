@@ -12,12 +12,15 @@ import { SPEECH_LOCALE } from "@/lib/i18n/config";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary, format } from "@/lib/i18n/dictionaries";
 import { getInterfaceMode } from "@/lib/interface-mode/get-interface-mode";
+import { getActivePilotSession } from "@/lib/pilot/session-cookie";
 
 export default async function DashboardPage() {
   const { profile, userId } = await getMyCraftsmanProfile();
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const interfaceMode = await getInterfaceMode();
+  const pilotSession = await getActivePilotSession();
+  const pilotMode = Boolean(pilotSession);
 
   if (!userId) {
     redirect("/login");
@@ -76,14 +79,16 @@ export default async function DashboardPage() {
         </header>
 
         {interfaceMode === "icon" ? (
-          <IconDashboard profileSlug={profile.slug} completionPercent={completion.percent} dict={dict} />
+          <IconDashboard profileSlug={profile.slug} completionPercent={completion.percent} dict={dict} pilotMode={pilotMode} />
         ) : (
           <>
-            <ProfileCompletionCard completion={completion} title={dict.dashboardPage.profileCompletionTitle} />
+            {!pilotMode && (
+              <ProfileCompletionCard completion={completion} title={dict.dashboardPage.profileCompletionTitle} />
+            )}
 
             <div className="flex flex-col gap-3">
               <h2 className="font-display text-lg font-semibold text-ink-900">{dict.dashboardPage.quickActionsTitle}</h2>
-              <QuickActions profileSlug={profile.slug} dict={dict} />
+              <QuickActions profileSlug={profile.slug} dict={dict} pilotMode={pilotMode} />
             </div>
           </>
         )}
